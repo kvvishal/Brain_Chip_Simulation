@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as THREE from "three";
 
 import BrainConnection from "./BrainConnection";
@@ -9,6 +9,8 @@ import { loadRegions } from "@/api/brainAPI";
 import { coordinateTransformer } from "./CoordinateTransformer";
 import { brainPositionStore } from "./BrainPositionStore";
 import { brainEngine } from "./BrainEngine";
+import BrainSignal from "./BrainSignals";
+import { brainGraph } from "./BrainGraph";
 
 type Connection = {
     source: number;
@@ -31,6 +33,7 @@ export default function BrainConnections() {
 
         ]).then(([connectionData, regionData]) => {
 
+            brainGraph.initialize(connectionData);
             setConnections(connectionData);
             setRegions(regionData.regions);
 
@@ -75,10 +78,9 @@ export default function BrainConnections() {
                     );
 
                     return (
+                        <React.Fragment key={`${c.source}-${c.target}`}>
 
                         <BrainConnection
-
-                            key={index}
 
                             start={start}
 
@@ -89,6 +91,16 @@ export default function BrainConnections() {
                             activity = {activity}
 
                         />
+
+                        <BrainSignal
+                            
+                            start={start}
+
+                            end={end}
+
+                        />
+                    
+                    </React.Fragment>
 
                     );
 

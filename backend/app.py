@@ -6,6 +6,7 @@ from routes.activity import activity_bp
 from routes.brain import brain_bp
 
 from services.brain_service import get_brain
+from routes.simulation import simulation_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -13,6 +14,8 @@ CORS(app)
 app.register_blueprint(brain_bp)
 
 app.register_blueprint(activity_bp)
+
+app.register_blueprint(simulation_bp)
 
 @app.route("/")
 def home():

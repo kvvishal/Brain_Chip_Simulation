@@ -3,6 +3,9 @@
 import { useFrame } from "@react-three/fiber";
 import { brainEngine } from "./BrainEngine";
 import { diseaseEngine } from "./DiseaseEngine";
+import { simulationPlayer } from "./SimulationPlayer";
+import { statisticsEngine } from "./StatisticsEngine";
+import { diseasePropagation } from "./DiseasePropagation";
 
 export default function BrainAnimator() {
 
@@ -10,7 +13,13 @@ export default function BrainAnimator() {
 
         brainEngine.update();
 
-        diseaseEngine.update();
+        diseasePropagation.update();
+
+        diseasePropagation.update();
+
+        statisticsEngine.update();
+        
+        simulationPlayer.update();
 
     });
 

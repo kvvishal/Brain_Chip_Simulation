@@ -4,12 +4,19 @@ import { useState } from "react";
 import { brainEngine } from "../Brain/BrainEngine";
 import { useBrain } from "../Brain/BrainContext";
 import { diseaseEngine } from "../Brain/DiseaseEngine";
+import { simulationPlayer } from "../Brain/SimulationPlayer";
+import { simulationManager } from "@/simulation/SimulationManager";
+import { diseasePropagation } from "../Brain/DiseasePropagation";
 
 export default function LeftPanel() {
 
     const { refresh } = useBrain();
 
     function healthy() {
+
+        simulationPlayer.restart();
+
+        simulationPlayer.play();
 
         brainEngine.setHealthy();
 
@@ -21,15 +28,19 @@ export default function LeftPanel() {
 
     function alzheimer() {
 
-        brainEngine.setAlzheimer();
+        simulationPlayer.pause();
 
-        diseaseEngine.start();
+        simulationManager.setMode("alzheimer");
+
+        diseasePropagation.start(17);
 
         refresh();
 
     }
 
     function chip() {
+
+        simulationPlayer.pause();
 
         brainEngine.activateChip();
 

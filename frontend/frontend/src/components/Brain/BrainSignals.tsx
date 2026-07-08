@@ -1,89 +1,61 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
+import { useFrame } from "@react-three/fiber";
+import { useRef } from "react";
 
-import {
-  BrainRegion,
-  BrainConnection,
-  loadRegions,
-  loadStrongConnections,
-} from "./brainData";
+type Props = {
+    start: THREE.Vector3;
+    end: THREE.Vector3;
+    speed?: number;
+};
 
-export default function BrainSignals() {
+export default function BrainSignal({
 
-  const [regions, setRegions] = useState<BrainRegion[]>([]);
-  const [connections, setConnections] = useState<BrainConnection[]>([]);
-  const [time, setTime] = useState(0);
+    start,
 
-  useEffect(() => {
+    end,
 
-    loadRegions().then(setRegions);
-    loadStrongConnections(0.65).then(setConnections);
+    speed = 0.4
 
-  }, []);
+}: Props) {
 
-  useEffect(() => {
+    const mesh = useRef<THREE.Mesh>(null);
 
-    let animationFrame: number;
+    useFrame(({ clock }) => {
 
-    const animate = () => {
-      setTime(performance.now() * 0.001);
-      animationFrame = requestAnimationFrame(animate);
-    };
+        if (!mesh.current) return;
 
-    animate();
+        const t = (clock.elapsedTime * speed) % 1;
 
-    return () => cancelAnimationFrame(animationFrame);
+        mesh.current.position.lerpVectors(
 
-  }, []);
+            start,
 
-  const regionMap = useMemo(() => {
-    const map = new Map<number, BrainRegion>();
+            end,
 
-    regions.forEach((r) => map.set(r.id, r));
+            t
 
-    return map;
-  }, [regions]);
-
-  return (
-    <>
-      {connections.slice(0, 150).map((connection, index) => {
-
-        const source = regionMap.get(connection.source);
-        const target = regionMap.get(connection.target);
-
-        if (!source || !target) return null;
-
-        const t = (time * 0.3 + index * 0.01) % 1;
-
-        const start = new THREE.Vector3(
-          source.position[0] * 30,
-          source.position[2] * 30,
-          -source.position[1] * 30
         );
 
-        const end = new THREE.Vector3(
-          target.position[0] * 30,
-          target.position[2] * 30,
-          -target.position[1] * 30
-        );
+    });
 
-        const position = start.clone().lerp(end, t);
+    return (
 
-        return (
-          <mesh
-            key={index}
-            position={position}
-          >
-            <sphereGeometry args={[0.6, 12, 12]} />
+        <mesh ref={mesh}>
+
+            <sphereGeometry args={[0.018, 12, 12]} />
 
             <meshBasicMaterial
-              color="#00ffff"
+
+                color="#00ffff"
+
+                toneMapped={false}
+
             />
-          </mesh>
-        );
-      })}
-    </>
-  );
+
+        </mesh>
+
+    );
+
 }

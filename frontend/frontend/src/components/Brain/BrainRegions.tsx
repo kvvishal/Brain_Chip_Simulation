@@ -36,6 +36,7 @@ function getRegionColor(name: string) {
 
 export default function BrainRegions() {
     const { version } = useBrain();
+    void version;
 
     const [regions, setRegions] = useState<any[]>([]);
     const [ready, setReady] = useState(false);

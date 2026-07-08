@@ -1,15 +1,20 @@
+import { BrainRegionState } from "./BrainRegionState";
+
 export interface BrainState {
 
-    id:number;
+    regions: BrainRegionState[];
 
-    name:string;
+    currentFrame: number;
 
-    activity:number;
+    simulationTime: number;
 
-    health:number;
+    mode:
+        | "healthy"
+        | "alzheimer"
+        | "chip";
 
-    infected:boolean;
+    playing: boolean;
 
-    stimulated:boolean;
+    speed: number;
 
 }
