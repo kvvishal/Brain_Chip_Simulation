@@ -78,6 +78,26 @@ class StatisticsEngine {
 
             return "Critical";
     }
+
+    getDiseasePercentage() {
+
+    const regions = brainEngine.getRegions();
+
+    if (regions.length === 0)
+
+        return 0;
+
+    const total = regions.reduce(
+
+        (sum, r) => sum + r.disease,
+
+        0
+
+    );
+        
+    return (total / regions.length) * 100;
+
+}
 }
 
 export const statisticsEngine =

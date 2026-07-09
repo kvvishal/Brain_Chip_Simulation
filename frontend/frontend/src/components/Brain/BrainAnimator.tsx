@@ -6,6 +6,7 @@ import { diseaseEngine } from "./DiseaseEngine";
 import { simulationPlayer } from "./SimulationPlayer";
 import { statisticsEngine } from "./StatisticsEngine";
 import { diseasePropagation } from "./DiseasePropagation";
+import { refresh } from "next/cache";
 
 export default function BrainAnimator() {
 

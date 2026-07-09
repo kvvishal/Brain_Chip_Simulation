@@ -28,6 +28,8 @@ export default function LeftPanel() {
 
     function alzheimer() {
 
+        brainEngine.setAlzheimer();
+
         simulationPlayer.pause();
 
         simulationManager.setMode("alzheimer");

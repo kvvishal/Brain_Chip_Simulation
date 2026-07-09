@@ -10,6 +10,7 @@ import { BRAIN_OFFSET, BRAIN_SCALE } from "./BrainConstants";
 import { brainPositionStore } from "./BrainPositionStore";
 import { brainEngine } from "./BrainEngine";
 import { useBrain } from "../Brain/BrainContext";
+import { stat } from "fs";
 
 function getRegionColor(name: string) {
 
@@ -58,12 +59,12 @@ export default function BrainRegions() {
 
             brainPositionStore.set(transformed);
 
-            setRegions(data.regions);
-
             brainEngine.initialize(data.regions);
 
-            setReady(true);
+            setRegions(data.regions);
 
+            setReady(true);
+        
         });
 
     }, []);
@@ -74,30 +75,49 @@ export default function BrainRegions() {
 
     }
 
-    return (
+    regions.map((r) => {
 
-        <>
+        const state = brainEngine.getRegions()[r.id];
 
-            {regions.map((r) => (
+        if (!state) return null;
+
+        let color = getRegionColor(r.name);
+
+        if (state.disease > 0.75) {
+
+            color = "#ff0000";
+
+        }
+        else if (state.disease > 0.50) {
+
+            color = "#ff8800";
+
+        }
+        else if (state.disease > 0.25) {
+
+            color = "#ffff00";
+
+        }
+        
+        console.log("BrainEngine:", brainEngine.getRegionCount());
+        
+        return (
 
             <BrainRegion
 
                 key={r.id}
 
-                position = {brainPositionStore.get()[r.id]}
+                position={brainPositionStore.get()[r.id]}
 
-                activity={brainEngine.getActivity(r.id)}
+                activity={state.activity}
 
-                color={getRegionColor(r.name)}
+                color={color}
 
-                health={brainEngine.getHealth(r.id)}
+                health={state.health}
 
             />
 
-            ))}
+        );
+        
 
-        </>
-
-    );
-
-}
+})}

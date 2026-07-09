@@ -1,16 +1,18 @@
-import { brainEngine } from "./BrainEngine";
 import { brainGraph } from "./BrainGraph";
+import { brainEngine } from "./BrainEngine";
 import { SimulationConfig } from "./SimulationConfig";
 
 class DiseasePropagation {
 
-    private enabled = false;
+    private running = false;
 
     private infected = new Set<number>();
 
+    private lastUpdate = 0;
+
     start(seed: number) {
 
-        this.enabled = true;
+        this.running = true;
 
         this.infected.clear();
 
@@ -26,59 +28,94 @@ class DiseasePropagation {
 
     stop() {
 
-        this.enabled = false;
+        this.running = false;
+
+        this.infected.clear();
 
     }
 
     update() {
 
-        if (!this.enabled) return;
+        if (!this.running) return;
 
-        const newInfected: number[] = [];
+        const now = performance.now();
+
+        if (now - this.lastUpdate < 100){
+
+            return;
+        }
+
+        this.lastUpdate = now;
 
         this.infected.forEach(id => {
 
-            const region = brainEngine.getRegion(id);
+            const newRegions: number[] = [];
 
-            const neighbours = brainGraph.neighbours(id);
+            const source = brainEngine.getRegion(id);
+
+            const neighbours = brainGraph.getNeighbours(id);
 
             neighbours.forEach(edge => {
 
                 const target = brainEngine.getRegion(edge.target);
 
                 const spread =
-                    region.disease *
+                    source.disease *
                     edge.weight *
                     SimulationConfig.diseaseSpreadRate;
 
                 target.disease += spread;
 
-                target.disease = Math.min(1, target.disease);
+                target.disease = Math.min(
+                    
+                    SimulationConfig.maximumHealth,
+                    Math.max(
+                        0,
+                        target.disease
+                    )
+                );
 
                 target.health -=
                     spread *
                     SimulationConfig.diseaseDamageRate;
 
-                target.health = Math.max(0, target.health);
+                target.health = Math.min(
+                    SimulationConfig.maximumHealth,
+                    Math.max(
 
-                target.activity *= target.health;
+                        SimulationConfig.minimumHealth,
+                        target.health
+
+                    )
+                );
+
+                target.activity = Math.max(
+                    0,
+
+                    target.activity -
+                    spread *
+                    SimulationConfig.activityLossRate
+
+                );
 
                 if (
-                    target.disease > 0.10 &&
+                    target.disease >
+                        SimulationConfig.infectionThreshold &&
                     !target.infected
                 ) {
 
                     target.infected = true;
 
-                    newInfected.push(edge.target);
+                    newRegions.push(edge.target);
 
                 }
 
             });
 
+            newRegions.forEach(id => this.infected.add(id));
         });
 
-        newInfected.forEach(id => this.infected.add(id));
+        
 
     }
 

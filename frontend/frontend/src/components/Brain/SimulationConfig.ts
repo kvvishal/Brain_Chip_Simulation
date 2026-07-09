@@ -1,17 +1,19 @@
-export const SimulationConfig={
+export const SimulationConfig = {
 
-    diseaseSpreadRate:0.003,
+    diseaseSpreadRate: 0.002,
 
-    diseaseDamageRate:0.0015,
+    diseaseDamageRate: 0.001,
 
-    stimulationStrength:0.02,
+    activityLossRate: 0.4,
 
-    recoveryRate:0.004,
+    recoveryRate: 0.004,
 
-    maxHealth:1,
+    stimulationStrength: 0.02,
 
-    minHealth:0,
+    minimumHealth: 0,
 
-    healthyActivity:1
+    maximumHealth: 1,
+
+    infectionThreshold: 0.15
 
 };
