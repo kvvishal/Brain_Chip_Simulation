@@ -14,6 +14,8 @@ type BrainRegionProps = {
 
     health: number;
 
+    stimulated: boolean;
+
 };
 
 export default function BrainRegion({
@@ -24,7 +26,9 @@ export default function BrainRegion({
 
     color,
 
-    health
+    health,
+
+    stimulated
 
 }: BrainRegionProps) {
 
@@ -53,8 +57,20 @@ export default function BrainRegion({
 
         material.opacity = Math.max(0.35, health);
 
-        material.emissiveIntensity =
-            0.3 + activity * 1.5;
+        if (stimulated) {
+
+            material.emissive.set("#00ffff");
+
+            material.emissiveIntensity = 4;
+
+        } else {
+
+            material.emissive.set(color);
+
+            material.emissiveIntensity =
+                0.3 + activity * 1.5;
+
+        }
 
     });
 

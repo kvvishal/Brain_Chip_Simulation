@@ -8,13 +8,15 @@ type Props = {
     end: THREE.Vector3;
     weight: number;
     activity: number;
+    connectionStrength: number;
 };
 
 export default function BrainConnection({
     start,
     end,
     weight,
-    activity
+    activity,
+    connectionStrength
 }: Props) {
 
     const points = useMemo(() => [start, end], [start, end]);
@@ -22,15 +24,16 @@ export default function BrainConnection({
     const geometry = useMemo(() => {
         return new THREE.BufferGeometry().setFromPoints(points);
     }, [points]);
+
     return (
         <line geometry={geometry}>
             <lineBasicMaterial
-            attach="material"
-            color="#7DEBFF"
-            transparent={true}
-            opacity={0.05 + activity * 0.35}
-            depthWrite={false}
-        />
+                attach="material"
+                color="#7DEBFF"
+                transparent
+                opacity={0.35}
+                depthWrite={false}
+            />
         </line>
     );
 }

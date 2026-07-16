@@ -5,7 +5,9 @@ import BrainModel from "./BrainModel";
 import BrainRegions from "./BrainRegions";
 import BrainConnections from "./BrainConnections";
 import BrainAnimator from "./BrainAnimator";
+import BrainChip from "./BrainChip";
 import { simulationPlayer } from "./SimulationPlayer";
+import BrainPulse from "./BrainPulse";
 
 export default function BrainRoot() {
 
@@ -26,6 +28,10 @@ export default function BrainRoot() {
             <BrainConnections />
 
             <BrainRegions />
+
+            <BrainChip />
+
+            <BrainPulse />
 
         </group>
 

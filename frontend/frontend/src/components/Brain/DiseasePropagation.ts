@@ -1,6 +1,8 @@
+
 import { brainGraph } from "./BrainGraph";
 import { brainEngine } from "./BrainEngine";
 import { SimulationConfig } from "./SimulationConfig";
+
 
 class DiseasePropagation {
 

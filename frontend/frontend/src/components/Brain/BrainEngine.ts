@@ -1,34 +1,43 @@
+
 import { BrainRegionState } from "./BrainRegionState";
 import { BrainEvent } from "./BrainEvent";
+
+export type BrainMode =
+    "healthy" |
+    "alzheimer" |
+    "chip";
 
 class BrainEngine {
 
     private names: string[] = [];
 
-    private frame:number[] = [];
+    private frame: number[] = [];
 
     private regions: BrainRegionState[] = [];
+
+    private chipActive = false;
+
+    // ADD HERE
+    private mode: BrainMode = "healthy";
 
     // -----------------------------
     // Initialize Brain
     // -----------------------------
     initialize(regions: any[]) {
 
-        const count = regions.length;
-
         this.names = regions.map(r => r.name);
 
         this.regions = [];
 
-        for (let i = 0; i < this.names.length; i++) {
+        for (let i = 0; i < regions.length; i++) {
 
             this.regions.push({
 
                 id: i,
 
-                name: this.names[i],
+                name: regions[i].name,
 
-                activity: 0,
+                activity: 0.8,
 
                 health: 1,
 
@@ -47,36 +56,55 @@ class BrainEngine {
         }
 
         console.log("Brain Engine Initialized");
-        console.log("Regions:", count);
+        console.log("Regions:", this.regions.length);
+
     }
 
     // -----------------------------
     // Getters
     // -----------------------------
 
-    getActivity(index: number) {
+    getRegion(index: number): BrainRegionState {
 
-    if (!this.regions[index]) {
+        if (!this.regions[index]) {
 
-        return 0;
+            throw new Error(`Region ${index} not initialized`);
+
+        }
+
+        return this.regions[index];
 
     }
 
-    return this.regions[index].activity;
+    getRegions() {
 
-}
+        return this.regions;
+
+    }
+
+    getRegionCount() {
+
+        return this.regions.length;
+
+    }
+
+    getRegionName(index: number) {
+
+        return this.regions[index]?.name ?? "";
+
+    }
+
+    getActivity(index: number) {
+
+        return this.regions[index]?.activity ?? 0;
+
+    }
 
     getHealth(index: number) {
 
-    if (!this.regions[index]) {
-
-        return 1;
+        return this.regions[index]?.health ?? 1;
 
     }
-
-    return this.regions[index].health;
-
-}
 
     isInfected(index: number) {
 
@@ -90,31 +118,42 @@ class BrainEngine {
 
     }
 
-    getRegionName(index: number) {
+    isChipActive() {
 
-        return this.names[index];
-
-    }
-
-    getRegionCount(): number {
-
-        return this.regions.length;
-    }
-
-    getRegion(index: number): BrainRegionState {
-
-    if (!this.regions[index]) {
-
-        throw new Error(`Region ${index} not initialized`);
+        return this.chipActive;
 
     }
 
-    return this.regions[index];
+    setMode(mode: BrainMode) {
+
+        this.mode = mode;
 
     }
 
-    getRegions(){
-        return this.regions;
+    getMode(): BrainMode {
+
+        return this.mode;
+
+    }
+
+    // -----------------------------
+    // Setters
+    // -----------------------------
+
+    setActivity(index: number, value: number) {
+
+        if (!this.regions[index]) return;
+
+        this.regions[index].activity = Math.max(0, Math.min(1, value));
+
+    }
+
+    setHealth(index: number, value: number) {
+
+        if (!this.regions[index]) return;
+
+        this.regions[index].health = Math.max(0, Math.min(1, value));
+
     }
 
     // -----------------------------
@@ -123,25 +162,25 @@ class BrainEngine {
 
     setHealthy() {
 
-    this.regions.forEach(region => {
+        this.regions.forEach(region => {
 
-        region.activity = 1;
+            region.activity = 1;
 
-        region.health = 1;
+            region.health = 1;
 
-        region.disease = 0;
+            region.disease = 0;
 
-        region.stimulation = 0;
+            region.stimulation = 0;
 
-        region.connectionStrength = 1;
+            region.connectionStrength = 1;
 
-        region.infected = false;
+            region.infected = false;
 
-        region.stimulated = false;
+            region.stimulated = false;
 
-    });
+        });
 
-    console.log("Healthy Brain Loaded");
+        console.log("Healthy Brain Loaded");
 
     }
 
@@ -151,43 +190,45 @@ class BrainEngine {
 
     setAlzheimer() {
 
-    this.regions.forEach(region => {
+        this.regions.forEach(region => {
 
-        if (
+            if (
 
-            region.name.includes("Hipp") ||
+                region.name.includes("Hipp") ||
 
-            region.name.includes("PHC") ||
+                region.name.includes("PHC") ||
 
-            region.name.includes("Amyg") ||
+                region.name.includes("Amyg") ||
 
-            region.name.includes("TC")
+                region.name.includes("TC")
 
-        ) {
+            ) {
 
-            region.activity = 0.35;
+                region.activity = 0.35;
 
-            region.health = 0.45;
+                region.health = 0.45;
 
-            region.disease = 0.65;
+                region.disease = 0.65;
 
-            region.infected = true;
+                region.infected = true;
 
-        }
+            }
 
-    });
+        });
 
-    console.log("Alzheimer Mode Activated");
+        console.log("Alzheimer Mode Activated");
 
     }
 
     // -----------------------------
+    // Simulation Frame
+    // -----------------------------
 
-    setFrame(activity:number[]) {
+    setFrame(activity: number[]) {
 
         this.frame = activity;
 
-        this.regions.forEach((region,index)=>{
+        this.regions.forEach((region, index) => {
 
             const value = activity[index] ?? 0;
 
@@ -199,21 +240,10 @@ class BrainEngine {
 
                     1,
 
-                    (value+2)/6
+                    (value + 2) / 6
 
                 )
 
-            );
-
-             region.health = Math.max(0, Math.min(1, region.health));
-
-            region.disease = Math.max(0, Math.min(1, region.disease));
-
-            region.stimulation = Math.max(0, Math.min(1, region.stimulation));
-
-            region.connectionStrength = Math.max(
-                0,
-                Math.min(1, region.connectionStrength)
             );
 
         });
@@ -226,9 +256,11 @@ class BrainEngine {
 
     activateChip() {
 
+        this.chipActive = true;
+
         this.regions.forEach(region => {
 
-            if(region.infected){
+            if (region.infected) {
 
                 region.stimulated = true;
 
@@ -236,9 +268,23 @@ class BrainEngine {
 
             }
 
-    });
+        });
 
-    console.log("Brain Chip Activated");
+        console.log("Brain Chip Activated");
+
+    }
+
+    deactivateChip() {
+
+        this.chipActive = false;
+
+        this.regions.forEach(region => {
+
+            region.stimulated = false;
+
+            region.stimulation = 0;
+
+        });
 
     }
 
@@ -248,65 +294,69 @@ class BrainEngine {
 
     update() {
 
-    this.regions.forEach(region => {
+        this.regions.forEach(region => {
 
-        if(!region.infected){
+            if (!region.infected) {
 
-            region.activity +=
+                region.activity +=
 
-                (Math.random()-0.5)*0.01;
+                    (Math.random() - 0.5) * 0.01;
 
-        }
+            }
 
-        if(region.stimulated){
+            if (region.stimulated) {
 
-            region.activity += 0.0015;
+                region.activity += 0.0015;
 
-            region.health += 0.001;
+                region.health += 0.001;
 
-        }
+            }
 
-        region.activity=Math.max(
+            region.activity = Math.max(
 
-            0,
+                0,
 
-            Math.min(1,region.activity)
+                Math.min(1, region.activity)
 
-        );
+            );
 
-        region.health=Math.max(
+            region.health = Math.max(
 
-            0,
+                0,
 
-            Math.min(1,region.health)
+                Math.min(1, region.health)
 
-        );
+            );
 
-    });
+        });
 
     }
 
-    applyEvent(event:BrainEvent){
+    // -----------------------------
+    // Apply Events
+    // -----------------------------
 
-    const r=this.getRegion(event.region);
+    applyEvent(event: BrainEvent) {
 
-    r.activity+=event.activityDelta;
+        const r = this.getRegion(event.region);
 
-    r.health+=event.healthDelta;
+        r.activity += event.activityDelta;
 
-    r.disease+=event.diseaseDelta;
+        r.health += event.healthDelta;
 
-    r.stimulation+=event.stimulationDelta;
+        r.disease += event.diseaseDelta;
 
-    r.activity=Math.max(0,Math.min(1,r.activity));
+        r.stimulation += event.stimulationDelta;
 
-    r.health=Math.max(0,Math.min(1,r.health));
+        r.activity = Math.max(0, Math.min(1, r.activity));
 
-    r.disease=Math.max(0,Math.min(1,r.disease));
+        r.health = Math.max(0, Math.min(1, r.health));
 
-    r.stimulation=Math.max(0,Math.min(1,r.stimulation));
+        r.disease = Math.max(0, Math.min(1, r.disease));
 
-}
+        r.stimulation = Math.max(0, Math.min(1, r.stimulation));
+
+    }
 
 }
 

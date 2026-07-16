@@ -7,20 +7,40 @@ import { diseaseEngine } from "../Brain/DiseaseEngine";
 import { simulationPlayer } from "../Brain/SimulationPlayer";
 import { simulationManager } from "@/simulation/SimulationManager";
 import { diseasePropagation } from "../Brain/DiseasePropagation";
+import { brainSignalPropagation } from "../Brain/BrainSignalPropagation";
+import { brainChipEngine } from "../Brain/BrainChipEngine";
 
 export default function LeftPanel() {
 
     const { refresh } = useBrain();
 
+    function resetSimulation() {
+
+        // Stop animations
+        simulationPlayer.pause();
+
+        // Reset brain
+        brainEngine.setHealthy();
+        brainEngine.deactivateChip();
+
+        // Stop disease
+        diseaseEngine.stop();
+        diseasePropagation.stop();
+
+        // Stop chip signal propagation
+        brainSignalPropagation.reset();
+
+    }
+
     function healthy() {
+
+        brainEngine.setMode("healthy");
+
+        resetSimulation();
 
         simulationPlayer.restart();
 
         simulationPlayer.play();
-
-        brainEngine.setHealthy();
-
-        diseaseEngine.stop()
 
         refresh();
 
@@ -28,11 +48,18 @@ export default function LeftPanel() {
 
     function alzheimer() {
 
-        brainEngine.setAlzheimer();
+        brainEngine.setMode("alzheimer");
 
-        simulationPlayer.pause();
+        resetSimulation();
 
         simulationManager.setMode("alzheimer");
+
+        brainEngine.setAlzheimer();
+
+        console.log(
+            "Region Count:",
+            brainEngine.getRegionCount()
+        );
 
         diseasePropagation.start(17);
 
@@ -42,11 +69,22 @@ export default function LeftPanel() {
 
     function chip() {
 
-        simulationPlayer.pause();
+        brainEngine.setMode("chip");
+
+        resetSimulation();
+
+        simulationManager.setMode("alzheimer");
+
+        brainEngine.setAlzheimer();
+
+        diseasePropagation.start(17);
 
         brainEngine.activateChip();
 
-        diseaseEngine.stop();
+        const region =
+            brainChipEngine.getNearestRegion();
+
+        brainSignalPropagation.start(region);
 
         refresh();
 
@@ -88,7 +126,13 @@ export default function LeftPanel() {
 
             <button
 
-                onClick={chip}
+                onClick={() => {
+
+                    console.log("BUTTON CLICKED");
+
+                    chip();
+
+                }}
 
                 className="w-full mb-3 p-3 rounded bg-green-700 hover:bg-green-600"
 

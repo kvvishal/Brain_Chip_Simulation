@@ -1,49 +1,50 @@
+"use client";
+
 import BrainCanvas from "../Brain/BrainCanvas";
+import StatusPanel from "./StatusPanel";
+import BrainStatistics from "./BrainStatistics";
+import EventLog from "./EventLog";
 
 export default function Dashboard() {
 
-return (
+    return (
 
-<div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-6 h-full">
 
-<div className="col-span-8">
+            {/* ================= Brain Viewer ================= */}
 
-<BrainCanvas />
+            <div className="col-span-8">
 
-</div>
+                <BrainCanvas />
 
-<div className="col-span-4">
+            </div>
 
-<div className="bg-[#111827] rounded-xl h-[500px]">
+            {/* ================= Right Status ================= */}
 
-Neural Chip Panel
+            <div className="col-span-4">
 
-</div>
+                <StatusPanel />
 
-</div>
+            </div>
 
-<div className="col-span-6">
+            {/* ================= Statistics ================= */}
 
-<div className="bg-[#111827] h-[350px] rounded-xl">
+            <div className="col-span-6">
 
-Brain Activity
+                <BrainStatistics />
 
-</div>
+            </div>
 
-</div>
+            {/* ================= Event Log ================= */}
 
-<div className="col-span-6">
+            <div className="col-span-6">
 
-<div className="bg-[#111827] h-[350px] rounded-xl">
+                <EventLog />
 
-EEG
+            </div>
 
-</div>
+        </div>
 
-</div>
-
-</div>
-
-);
+    );
 
 }

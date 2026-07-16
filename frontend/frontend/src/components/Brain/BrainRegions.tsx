@@ -6,36 +6,42 @@ import * as THREE from "three";
 import BrainRegion from "./BrainRegion";
 import { loadRegions } from "@/api/brainAPI";
 import { coordinateTransformer } from "./CoordinateTransformer";
-import { BRAIN_OFFSET, BRAIN_SCALE } from "./BrainConstants";
 import { brainPositionStore } from "./BrainPositionStore";
 import { brainEngine } from "./BrainEngine";
 import { useBrain } from "../Brain/BrainContext";
-import { stat } from "fs";
 
-function getRegionColor(name: string) {
+function getRegionColor(
+    name: string,
+    health: number,
+    infected: boolean
+) {
+    // Disease colours
+    if (infected && health < 0.35) return "#ff3030";
+    if (health < 0.60) return "#ff9900";
+    if (health < 0.90) return "#7CFC00";
 
-    if (name.includes("PFC")) return "#00BFFF";      // Frontal
+    // Anatomical colours
+    if (name.includes("PFC")) return "#00BFFF";
     if (name.includes("MFC")) return "#00BFFF";
 
-    if (name.includes("PC")) return "#00FF7F";       // Parietal
+    if (name.includes("PC")) return "#00FF7F";
     if (name.includes("SPL")) return "#00FF7F";
 
-    if (name.includes("TC")) return "#FF00FF";       // Temporal
+    if (name.includes("TC")) return "#FF00FF";
 
-    if (name.includes("OC")) return "#FFD700";       // Occipital
+    if (name.includes("OC")) return "#FFD700";
 
-    if (name.includes("Amyg")) return "#FF4040";     // Amygdala
+    if (name.includes("Amyg")) return "#FF4040";
+    if (name.includes("PHC")) return "#FF4040";
+    if (name.includes("Hipp")) return "#FF4040";
 
-    if (name.includes("PHC")) return "#FF4040";      // Parahippocampal
+    if (name.includes("Cb")) return "#00FFFF";
 
-    if (name.includes("Hipp")) return "#FF4040";     // Hippocampus
-
-    if (name.includes("Cb")) return "#00FFFF";       // Cerebellum
-
-    return "#66CCFF";                               // Default
+    return "#66CCFF";
 }
 
 export default function BrainRegions() {
+
     const { version } = useBrain();
     void version;
 
@@ -46,7 +52,7 @@ export default function BrainRegions() {
 
         loadRegions().then((data) => {
 
-            const transformed = data.regions.map((r:any) =>
+            const transformed = data.regions.map((r: any) =>
                 coordinateTransformer.transform(
                     new THREE.Vector3(
                         r.position[0],
@@ -54,17 +60,21 @@ export default function BrainRegions() {
                         r.position[2]
                     )
                 )
-            
             );
 
             brainPositionStore.set(transformed);
 
             brainEngine.initialize(data.regions);
 
+            console.log(
+                "Brain initialized:",
+                brainEngine.getRegionCount()
+            );
+
             setRegions(data.regions);
 
             setReady(true);
-        
+
         });
 
     }, []);
@@ -75,49 +85,58 @@ export default function BrainRegions() {
 
     }
 
-    regions.map((r) => {
+    return (
 
-        const state = brainEngine.getRegions()[r.id];
+        <>
 
-        if (!state) return null;
+            {regions.map((r) => {
 
-        let color = getRegionColor(r.name);
+                const state = brainEngine.getRegion(r.id);
 
-        if (state.disease > 0.75) {
+                let color = getRegionColor(
+                    r.name,
+                    state.health,
+                    state.infected
+                );
 
-            color = "#ff0000";
+                if (state.disease > 0.75) {
 
-        }
-        else if (state.disease > 0.50) {
+                    color = "#ff0000";
 
-            color = "#ff8800";
+                } else if (state.disease > 0.50) {
 
-        }
-        else if (state.disease > 0.25) {
+                    color = "#ff8800";
 
-            color = "#ffff00";
+                } else if (state.disease > 0.25) {
 
-        }
-        
-        console.log("BrainEngine:", brainEngine.getRegionCount());
-        
-        return (
+                    color = "#ffff00";
 
-            <BrainRegion
+                }
 
-                key={r.id}
+                return (
 
-                position={brainPositionStore.get()[r.id]}
+                    <BrainRegion
 
-                activity={state.activity}
+                        key={r.id}
 
-                color={color}
+                        position={brainPositionStore.get()[r.id]}
 
-                health={state.health}
+                        activity={state.activity}
 
-            />
+                        color={color}
 
-        );
-        
+                        stimulated={state.stimulated}
 
-})}
+                        health={state.health}
+
+                    />
+
+                );
+
+            })}
+
+        </>
+
+    );
+
+}
