@@ -3,82 +3,83 @@ import { brainSignalPropagation } from "./BrainSignalPropagation";
 
 class RecoveryEngine {
 
-    // ----------------------------------------------
+    // ==================================================
     // Recovery configuration
-    // ----------------------------------------------
+    // ==================================================
 
-    private recoveryRate = 0.0015;
+    /*
+     * These values are intentionally faster than a
+     * biological model because this is a visual
+     * simulation.
+     *
+     * Treatment should still be gradual, but users
+     * should be able to observe completion.
+     */
 
-    private diseaseSuppressionRate =
-        0.001;
+    private recoveryRate = 0.003;
 
-    private activityRecoveryRate =
-        0.002;
+    private diseaseSuppressionRate = 0.003;
 
-    // Region is considered functionally recovered
-    // only after reaching these values.
-    private healthyThreshold =
-        0.90;
+    private activityRecoveryRate = 0.006;
 
-    private activityThreshold =
-        0.90;
+    // Region considered functionally recovered
+    private healthyThreshold = 0.90;
 
-    private diseaseClearThreshold =
-        0.01;
+    private activityThreshold = 0.90;
 
-    // --------------------------------------------------
+    private diseaseClearThreshold = 0.01;
+
+    // ==================================================
     // Update recovery
-    // --------------------------------------------------
+    // ==================================================
 
     update() {
 
-        if (
-            !brainEngine.isChipActive()
-        ) {
+        if (!brainEngine.isChipActive()) {
             return;
         }
 
-        const count =
-            brainEngine.getRegionCount();
+        /*
+         * IMPORTANT:
+         *
+         * Work from a snapshot.
+         *
+         * completeTreatment() removes regions from the
+         * active set, so we should not iterate directly
+         * over a collection that is being modified.
+         */
 
-        for (
-            let i = 0;
-            i < count;
-            i++
-        ) {
+        const activeRegions =
+            brainSignalPropagation.getActiveRegions();
 
-            /*
-             * ONLY regions currently reached
-             * by chip treatment can recover.
-             */
+        for (const regionId of activeRegions) {
 
             if (
-                !brainSignalPropagation
-                    .isRegionActive(i)
+                regionId < 0 ||
+                regionId >= brainEngine.getRegionCount()
             ) {
-
                 continue;
             }
 
             const region =
-                brainEngine.getRegion(i);
+                brainEngine.getRegion(regionId);
 
             // ==========================================
             // HEALTH RECOVERY
             // ==========================================
 
             const currentHealth =
-                brainEngine.getHealth(i);
+                brainEngine.getHealth(regionId);
 
             const recoveredHealth =
                 Math.min(
                     currentHealth +
-                        this.recoveryRate,
+                    this.recoveryRate,
                     1
                 );
 
             brainEngine.setHealth(
-                i,
+                regionId,
                 recoveredHealth
             );
 
@@ -87,23 +88,24 @@ class RecoveryEngine {
             // ==========================================
 
             const currentActivity =
-                brainEngine.getActivity(i);
+                brainEngine.getActivity(regionId);
 
             /*
-             * Recovery becomes naturally slower
-             * as activity approaches 1.
+             * Exponential recovery.
+             *
+             * Recovery slows naturally as activity
+             * approaches normal levels.
              */
 
             const recoveredActivity =
                 currentActivity +
                 (
-                    1 -
-                    currentActivity
+                    1 - currentActivity
                 ) *
                 this.activityRecoveryRate;
 
             brainEngine.setActivity(
-                i,
+                regionId,
                 Math.min(
                     recoveredActivity,
                     1
@@ -118,11 +120,11 @@ class RecoveryEngine {
                 Math.max(
                     0,
                     region.disease -
-                        this.diseaseSuppressionRate
+                    this.diseaseSuppressionRate
                 );
 
             // ==========================================
-            // CLEAR ALZHEIMER'S DAMAGE
+            // CLEAR DISEASE STATE
             // ==========================================
 
             if (
@@ -132,25 +134,16 @@ class RecoveryEngine {
 
                 region.disease = 0;
 
-                region.infected =
-                    false;
+                region.infected = false;
             }
 
             // ==========================================
-            // CHECK COMPLETE RECOVERY
+            // CHECK TREATMENT COMPLETION
             // ==========================================
 
-            /*
-             * Disease reaching zero alone is NOT
-             * sufficient.
-             *
-             * The region should also recover its
-             * health and neural activity.
-             */
-
             const treatmentComplete =
-                region.disease <=
-                    this.diseaseClearThreshold &&
+
+                region.disease === 0 &&
 
                 recoveredHealth >=
                     this.healthyThreshold &&
@@ -158,30 +151,47 @@ class RecoveryEngine {
                 recoveredActivity >=
                     this.activityThreshold;
 
-            if (
-                treatmentComplete
-            ) {
+            if (treatmentComplete) {
+
+                /*
+                 * Normalize the recovered region.
+                 *
+                 * This prevents tiny floating-point
+                 * differences from leaving visually
+                 * inconsistent recovered regions.
+                 */
+
+                brainEngine.setHealth(
+                    regionId,
+                    1
+                );
+
+                brainEngine.setActivity(
+                    regionId,
+                    1
+                );
+
+                region.disease = 0;
+                region.infected = false;
 
                 brainSignalPropagation
-                    .completeTreatment(i);
+                    .completeTreatment(
+                        regionId
+                    );
             }
         }
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // Whole-brain recovery percentage
-    // --------------------------------------------------
+    // ==================================================
 
-    getRecoveryPercentage():
-        number {
+    getRecoveryPercentage(): number {
 
         const count =
             brainEngine.getRegionCount();
 
-        if (
-            count === 0
-        ) {
-
+        if (count === 0) {
             return 0;
         }
 
@@ -203,9 +213,9 @@ class RecoveryEngine {
         ) * 100;
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // Active treatment count
-    // --------------------------------------------------
+    // ==================================================
 
     getActiveTreatmentCount() {
 
@@ -213,9 +223,9 @@ class RecoveryEngine {
             .getActiveRegionCount();
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // Treatment coverage
-    // --------------------------------------------------
+    // ==================================================
 
     getTreatmentCoverage() {
 
