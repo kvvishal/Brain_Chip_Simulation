@@ -18,8 +18,6 @@ export default function LeftPanel() {
 
     // ==================================================
     // COMPLETE RESET
-    // Used only when creating a fresh Healthy brain
-    // or starting Alzheimer's from scratch
     // ==================================================
 
     function resetSimulation() {
@@ -177,20 +175,19 @@ export default function LeftPanel() {
         }
 
         /*
-        * IMPORTANT:
-        *
-        * Do NOT reset the entire simulation.
-        * The chip must treat the Alzheimer's
-        * damage already present in the brain.
-        */
+         * Do NOT reset the entire simulation.
+         * The chip treats the Alzheimer's damage
+         * already present in the brain.
+         */
 
         brainSignalPropagation.reset();
+
         brainChipEngine.reset();
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // If selected directly from Healthy mode,
         // first create Alzheimer's damage.
-        // ----------------------------------------------
+        // --------------------------------------------------
 
         if (
             brainEngine.getMode() === "healthy"
@@ -204,24 +201,17 @@ export default function LeftPanel() {
             }
         }
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // Freeze Alzheimer's progression
-        // ----------------------------------------------
-
-        /*
-        * Existing damage stays.
-        *
-        * New disease propagation stops so recovery
-        * is not fighting disease progression at
-        * the same time.
-        */
+        // --------------------------------------------------
 
         diseasePropagation.stop();
+
         diseaseEngine.stop();
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // Enter chip mode
-        // ----------------------------------------------
+        // --------------------------------------------------
 
         brainEngine.setMode(
             "chip"
@@ -229,28 +219,23 @@ export default function LeftPanel() {
 
         brainEngine.activateChip();
 
-        // ----------------------------------------------
-        // Update physical chip field once
-        // ----------------------------------------------
+        // --------------------------------------------------
+        // Update physical chip field
+        // --------------------------------------------------
 
         brainChipEngine.update();
 
-        // ----------------------------------------------
-        // Select adaptive target ONCE
-        // ----------------------------------------------
+        // --------------------------------------------------
+        // Select adaptive target
+        // --------------------------------------------------
 
         let target =
             brainChipEngine
                 .selectTargetRegion();
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // Fallback
-        // ----------------------------------------------
-
-        /*
-        * This should only happen if no damaged
-        * region qualifies for adaptive treatment.
-        */
+        // --------------------------------------------------
 
         if (target === null) {
 
@@ -288,9 +273,9 @@ export default function LeftPanel() {
                 );
         }
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // Final target validation
-        // ----------------------------------------------
+        // --------------------------------------------------
 
         if (
             target < 0 ||
@@ -316,9 +301,9 @@ export default function LeftPanel() {
                 target
             );
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // Debug information
-        // ----------------------------------------------
+        // --------------------------------------------------
 
         console.log(
             "Adaptive chip target:",
@@ -341,9 +326,9 @@ export default function LeftPanel() {
             targetRegion.activity
         );
 
-        // ----------------------------------------------
+        // --------------------------------------------------
         // Begin treatment propagation
-        // ----------------------------------------------
+        // --------------------------------------------------
 
         brainSignalPropagation.start(
             target
@@ -362,32 +347,146 @@ export default function LeftPanel() {
 
     return (
 
-        <aside className="w-72 bg-slate-900 border-r border-slate-700 p-5">
+        <aside
+            className="
+                w-full
+                min-w-0
+                bg-slate-900
+                border
+                border-slate-800
+                rounded-xl
+                p-4
+                sm:p-5
+                overflow-hidden
+            "
+        >
 
-            <h2 className="text-xl font-semibold text-white mb-6">
+            <h2
+                className="
+                    text-lg
+                    sm:text-xl
+                    font-semibold
+                    text-white
+                    mb-5
+                    sm:mb-6
+                "
+            >
                 Controls
             </h2>
 
-            <button
-                onClick={healthy}
-                className="w-full mb-3 p-3 rounded bg-cyan-600 hover:bg-cyan-500"
+            <div
+                className="
+                    flex
+                    flex-col
+                    gap-3
+                    w-full
+                    min-w-0
+                "
             >
-                Healthy Brain
-            </button>
 
-            <button
-                onClick={alzheimer}
-                className="w-full mb-3 p-3 rounded bg-red-700 hover:bg-red-600"
-            >
-                Alzheimer's
-            </button>
+                {/* Healthy Brain */}
 
-            <button
-                onClick={chip}
-                className="w-full mb-3 p-3 rounded bg-green-700 hover:bg-green-600"
-            >
-                Brain Chip
-            </button>
+                <button
+                    onClick={healthy}
+                    className="
+                        w-full
+                        min-w-0
+                        px-3
+                        sm:px-4
+                        py-3
+                        rounded-md
+
+                        bg-cyan-600
+                        hover:bg-cyan-500
+
+                        text-white
+                        text-sm
+                        sm:text-base
+                        font-medium
+
+                        whitespace-normal
+                        break-words
+
+                        transition-colors
+                        duration-200
+
+                        focus:outline-none
+                        focus:ring-2
+                        focus:ring-cyan-300
+                    "
+                >
+                    Healthy Brain
+                </button>
+
+                {/* Alzheimer's */}
+
+                <button
+                    onClick={alzheimer}
+                    className="
+                        w-full
+                        min-w-0
+                        px-3
+                        sm:px-4
+                        py-3
+                        rounded-md
+
+                        bg-red-700
+                        hover:bg-red-600
+
+                        text-white
+                        text-sm
+                        sm:text-base
+                        font-medium
+
+                        whitespace-normal
+                        break-words
+
+                        transition-colors
+                        duration-200
+
+                        focus:outline-none
+                        focus:ring-2
+                        focus:ring-red-300
+                    "
+                >
+                    Alzheimer's
+                </button>
+
+                {/* Brain Chip */}
+
+                <button
+                    onClick={chip}
+                    className="
+                        w-full
+                        min-w-0
+                        px-3
+                        sm:px-4
+                        py-3
+                        rounded-md
+
+                        bg-green-700
+                        hover:bg-green-600
+
+                        text-white
+                        text-sm
+                        sm:text-base
+                        font-medium
+
+                        whitespace-normal
+                        break-words
+
+                        transition-colors
+                        duration-200
+
+                        focus:outline-none
+                        focus:ring-2
+                        focus:ring-green-300
+                    "
+                >
+                    Brain Chip
+                </button>
+
+            </div>
 
         </aside>
     );
