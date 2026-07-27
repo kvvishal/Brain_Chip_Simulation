@@ -1,17 +1,19 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
-import * as THREE from "three";
 
 import BrainConnection from "./BrainConnection";
+import BrainSignal from "./BrainSignals";
+import { brainSignalPropagation } from "./BrainSignalPropagation";
+
+
 import { loadConnections } from "@/api/brainConnectionAPI";
 import { loadRegions } from "@/api/brainAPI";
+
 import { coordinateTransformer } from "./CoordinateTransformer";
 import { brainPositionStore } from "./BrainPositionStore";
+
 import { brainEngine } from "./BrainEngine";
-import { brainChipEngine } from "./BrainChipEngine";
-import BrainSignal from "./BrainSignals";
 import { brainGraph } from "./BrainGraph";
 
 type Connection = {
@@ -20,33 +22,85 @@ type Connection = {
     weight: number;
 };
 
+// --------------------------------------------------
+// Signal colour according to anatomical region
+// --------------------------------------------------
+
 function getSignalColor(name: string) {
 
-    if (name.includes("PFC")) return "#00BFFF";      // Blue
-    if (name.includes("MFC")) return "#00BFFF";
+    // Prefrontal cortex
+    if (name.includes("PFC"))
+        return "#00BFFF";
 
-    if (name.includes("PC")) return "#00FF7F";       // Green
-    if (name.includes("SPL")) return "#00FF7F";
+    if (name.includes("MFC"))
+        return "#00BFFF";
 
-    if (name.includes("TC")) return "#FF00FF";       // Purple
 
-    if (name.includes("OC")) return "#FFD700";       // Yellow
+    // Parietal cortex
+    if (name.includes("PC"))
+        return "#00FF7F";
 
-    if (name.includes("Amyg")) return "#FF4040";     // Red
-    if (name.includes("PHC")) return "#FF4040";
-    if (name.includes("Hipp")) return "#FF4040";
+    if (name.includes("SPL"))
+        return "#00FF7F";
 
-    if (name.includes("Cb")) return "#00FFFF";       // Cerebellum
+
+    // Temporal cortex
+    if (name.includes("TC"))
+        return "#FF00FF";
+
+
+    // Occipital cortex
+    if (name.includes("OC"))
+        return "#FFD700";
+
+
+    // Amygdala
+    if (name.includes("Amyg"))
+        return "#FF4040";
+
+
+    // Parahippocampal cortex
+    if (name.includes("PHC"))
+        return "#FF4040";
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Your atlas uses:
+     *
+     * RM-HC_R
+     * RM-HC_L
+     *
+     * for hippocampus.
+     */
+    if (name.includes("HC"))
+        return "#FF4040";
+
+
+    // Cerebellum
+    if (name.includes("Cb"))
+        return "#00FFFF";
+
 
     return "#FFFFFF";
-
 }
+
+// ==================================================
+// Brain Connections
+// ==================================================
 
 export default function BrainConnections() {
 
-    const [connections, setConnections] = useState<Connection[]>([]);
-    const [regions, setRegions] = useState<any[]>([]);
-    const points = brainPositionStore.get();
+    const [connections, setConnections] =
+        useState<Connection[]>([]);
+
+    const points =
+        brainPositionStore.get();
+
+    // --------------------------------------------------
+    // Load connections
+    // --------------------------------------------------
 
     useEffect(() => {
 
@@ -55,18 +109,43 @@ export default function BrainConnections() {
             loadConnections(),
             loadRegions()
 
-        ]).then(([connectionData, regionData]) => {
+        ])
+        .then(([connectionData, regionData]) => {
 
-            brainGraph.initialize(connectionData);
-            setConnections(connectionData);
-            setRegions(regionData.regions);
+            // Build graph used by disease/chip propagation
+            brainGraph.initialize(
+                connectionData
+            );
 
-            console.log("Connections:", connectionData.length);
-            console.log("Regions:", regionData.regions.length);
+            setConnections(
+                connectionData
+            );
+
+            console.log(
+                "Connections loaded:",
+                connectionData.length
+            );
+
+            console.log(
+                "Regions loaded:",
+                regionData.regions.length
+            );
+
+        })
+        .catch((error) => {
+
+            console.error(
+                "Failed to load brain connections:",
+                error
+            );
 
         });
 
     }, []);
+
+    // --------------------------------------------------
+    // Wait for coordinate system
+    // --------------------------------------------------
 
     if (!coordinateTransformer.isReady()) {
 
@@ -74,7 +153,23 @@ export default function BrainConnections() {
 
     }
 
-    
+    // --------------------------------------------------
+    // Wait for BrainEngine initialization
+    // --------------------------------------------------
+
+    const regionCount =
+        brainEngine.getRegionCount();
+
+    if (regionCount === 0) {
+
+        return null;
+
+    }
+
+    // ==================================================
+    // Render
+    // ==================================================
+
     return (
 
         <>
@@ -82,137 +177,287 @@ export default function BrainConnections() {
             {
 
                 connections
-    .filter(c => c.weight >= 2)
-    .sort((a, b) => b.weight - a.weight)
-    .slice(0, 300)
-    .map((c) => {
 
-        const start = points[c.source];
-        const end = points[c.target];
+                    // Ignore weak anatomical pathways
+                    .filter(
+                        (connection) =>
+                            connection.weight >= 2
+                    )
 
-        if (!start || !end)
-            return null;
+                    // Strongest first
+                    .sort(
+                        (a, b) =>
+                            b.weight - a.weight
+                    )
 
-        const activity =
-            (
-                brainEngine.getActivity(c.source) +
-                brainEngine.getActivity(c.target)
-            ) / 2;
+                    // Performance limit
+                    .slice(0, 300)
 
-        const signalColor =
-            getSignalColor(
-                brainEngine.getRegionName(c.source)
-            );
+                    .map((connection) => {
 
-        const disease = Math.max(
-            brainEngine.getRegion(c.source).disease,
-            brainEngine.getRegion(c.target).disease
-        );
+                        const source =
+                            connection.source;
 
-        const connectionStrength = 1 - disease;
+                        const target =
+                            connection.target;
 
-        console.log(
-            c.source,
-            c.target,
-            disease,
-            connectionStrength
-        );
+                        // ----------------------------------
+                        // Safety check
+                        // ----------------------------------
 
-        let signalSpeed = 0.4;
+                        if (
+                            source < 0 ||
+                            target < 0 ||
+                            source >= regionCount ||
+                            target >= regionCount
+                        ) {
 
-        //--------------------------------------------------
-        // Alzheimer's
-        //--------------------------------------------------
+                            return null;
 
-        const infected =
-            brainEngine.isInfected(c.source) ||
-            brainEngine.isInfected(c.target);
+                        }
 
-        // Stable blocked pathways (no flickering)
-        const blocked =
-            infected &&
-            ((c.source + c.target) % 3 === 0);
+                        // ----------------------------------
+                        // Positions
+                        // ----------------------------------
 
-        if (blocked)
-            return null;
+                        const start =
+                            points[source];
 
-        if (infected)
-            signalSpeed = 0.15;
+                        const end =
+                            points[target];
 
-        //--------------------------------------------------
-        // Chip stimulation
-        //--------------------------------------------------
+                        if (!start || !end) {
 
-        const chipStimulated =
-            brainChipEngine.isRegionActive(c.source) ||
-            brainChipEngine.isRegionActive(c.target);
+                            return null;
 
-        return (
+                        }
 
-            <React.Fragment
-                key={`${c.source}-${c.target}`}
-            >
+                        // ----------------------------------
+                        // Brain states
+                        // ----------------------------------
 
-                <BrainConnection
+                        const sourceState =
+                            brainEngine.getRegion(
+                                source
+                            );
 
-                    start={start}
+                        const targetState =
+                            brainEngine.getRegion(
+                                target
+                            );
 
-                    end={end}
+                        // ----------------------------------
+                        // Neural activity
+                        // ----------------------------------
 
-                    weight={Math.min(c.weight / 5, 0.25)}
+                        const activity =
+                            (
+                                sourceState.activity +
+                                targetState.activity
+                            ) / 2;
 
-                    activity={activity}
+                        // ----------------------------------
+                        // Alzheimer's disease level
+                        // ----------------------------------
 
-                    connectionStrength={connectionStrength}
+                        const disease =
+                            Math.max(
 
-                />
+                                sourceState.disease,
 
-                {/* Biological signal */}
+                                targetState.disease
 
-                <BrainSignal
+                            );
 
-                    source={c.source}
+                        /*
+                         * Connection remains anatomically
+                         * visible even when damaged.
+                         *
+                         * Healthy:
+                         *      strength ~ 1
+                         *
+                         * Alzheimer's:
+                         *      strength decreases
+                         *
+                         * We keep minimum 0.08 so that the
+                         * anatomical pathway doesn't vanish.
+                         */
 
-                    target={c.target}
+                        const connectionStrength =
+                            Math.max(
 
-                    start={start}
+                                0.08,
 
-                    end={end}
+                                1 - disease
 
-                    speed={signalSpeed}
+                            );
 
-                    color={signalColor}
+                        // ----------------------------------
+                        // Biological signal colour
+                        // ----------------------------------
 
-                />
+                        const signalColor =
+                            getSignalColor(
+                                sourceState.name
+                            );
 
-                {/* Chip repair signal */}
+                        // ==================================
+                        // CHIP STIMULATION
+                        // ==================================
 
-                {brainEngine.isChipActive() &&
-                    chipStimulated && (
+                        /*
+                         * Chip signals should currently
+                         * appear only around regions reached
+                         * by BrainChipEngine.
+                         */
 
-                    <BrainSignal
+                        const chipStimulated =
+                            brainSignalPropagation.isConnectionActive(
+                                source,
+                                target
+                            );
+                        // ==================================
+                        // Render pathway
+                        // ==================================
 
-                        source={c.source}
+                        // ==================================
+                        // BIOLOGICAL SIGNAL SPEED
+                        // ==================================
 
-                        target={c.target}
+                        const infected =
+                            sourceState.infected ||
+                            targetState.infected;
 
-                        start={start}
+                        let biologicalSpeed = 0.4;
 
-                        end={end}
+                        if (infected) {
+                            biologicalSpeed = 0.12;
+                        }
 
-                        speed={0.7}
+                        return (
 
-                        color="#00FFFF"
+                            <React.Fragment
+                                key={
+                                    `${source}-${target}`
+                                }
+                            >
 
-                    />
+                                {/* =========================
+                                    CONNECTION LINE
+                                   ========================= */}
 
-                )}
+                                <BrainConnection
 
-            </React.Fragment>
+                                    start={
+                                        start
+                                    }
 
-        );
+                                    end={
+                                        end
+                                    }
 
-    })
+                                    weight={
+                                        Math.min(
+
+                                            connection.weight / 5,
+
+                                            0.25
+
+                                        )
+                                    }
+
+                                    activity={
+                                        activity
+                                    }
+
+                                    connectionStrength={
+                                        connectionStrength
+                                    }
+
+                                />
+
+
+                                {/* =========================
+                                    BIOLOGICAL SIGNAL
+                                   ========================= */}
+
+                                <BrainSignal
+
+                                    source={
+                                        source
+                                    }
+
+                                    target={
+                                        target
+                                    }
+
+                                    start={
+                                        start
+                                    }
+
+                                    end={
+                                        end
+                                    }
+
+                                    speed={
+                                        biologicalSpeed
+                                    }
+
+                                    color={
+                                        signalColor
+                                    }
+
+                                    type="biological"
+
+                                />
+
+                                
+
+
+                                {/* =========================
+                                    CHIP SIGNAL
+                                   ========================= */}
+
+                                {
+
+                                    brainEngine
+                                        .isChipActive() &&
+
+                                    chipStimulated && (
+
+                                        <BrainSignal
+
+                                            source={
+                                                source
+                                            }
+
+                                            target={
+                                                target
+                                            }
+
+                                            start={
+                                                start
+                                            }
+
+                                            end={
+                                                end
+                                            }
+
+                                            color="#00FFFF"
+
+                                            type="chip"
+
+                                        />
+
+                                    )
+
+                                }
+
+                            </React.Fragment>
+
+                        );
+
+                    })
 
             }
 

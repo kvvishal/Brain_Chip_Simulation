@@ -190,31 +190,27 @@ class BrainEngine {
 
     setAlzheimer() {
 
+        // Alzheimer's mode should BEGIN the disease state.
+        // DiseasePropagation handles the actual progression.
+
         this.regions.forEach(region => {
 
-            if (
+            // Reset stimulation from any previous chip state
+            region.stimulated = false;
+            region.stimulation = 0;
 
-                region.name.includes("Hipp") ||
+            // Keep existing healthy baseline initially
+            region.activity = Math.min(region.activity, 1);
+            region.health = Math.min(region.health, 1);
 
-                region.name.includes("PHC") ||
+            region.disease = 0;
+            region.infected = false;
 
-                region.name.includes("Amyg") ||
-
-                region.name.includes("TC")
-
-            ) {
-
-                region.activity = 0.35;
-
-                region.health = 0.45;
-
-                region.disease = 0.65;
-
-                region.infected = true;
-
-            }
+            region.connectionStrength = 1;
 
         });
+
+        this.chipActive = false;
 
         console.log("Alzheimer Mode Activated");
 

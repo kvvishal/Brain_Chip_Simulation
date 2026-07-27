@@ -14,24 +14,48 @@ import { brainSignalPropagation } from "./BrainSignalPropagation";
 
 export default function BrainAnimator() {
 
-    // 👇 THIS WAS MISSING
     const { refresh } = useBrain();
 
     useFrame(() => {
 
+        // -----------------------------------------
+        // 1. Update base brain state
+        // -----------------------------------------
+
         brainEngine.update();
 
-        brainChipEngine.update();
+        // -----------------------------------------
+        // 2. Alzheimer's progression
+        // -----------------------------------------
 
-        recoveryEngine.update();
+        if (
+            brainEngine.getMode() === "alzheimer"
+        ) {
 
-        brainSignalPropagation.update();
+            diseasePropagation.update();
 
-        console.log(
-            brainSignalPropagation.getActiveRegions()
-        );
+        }
 
-        diseasePropagation.update();
+        // -----------------------------------------
+        // 3. Brain chip
+        // -----------------------------------------
+
+        if (brainEngine.isChipActive()) {
+
+            // AI/chip controller
+            brainChipEngine.update();
+
+            // Spread stimulation through network
+            brainSignalPropagation.update();
+
+            // Repair regions reached by stimulation
+            recoveryEngine.update();
+
+        }
+
+        // -----------------------------------------
+        // 4. Other simulation engines
+        // -----------------------------------------
 
         statisticsEngine.update();
 
@@ -39,10 +63,13 @@ export default function BrainAnimator() {
 
         diseaseEngine.update();
 
+        // -----------------------------------------
+        // 5. Update React visualization
+        // -----------------------------------------
+
         refresh();
 
     });
 
     return null;
-
 }

@@ -1,19 +1,25 @@
 export const SimulationConfig = {
 
-    diseaseSpreadRate: 0.002,
+    // How quickly Alzheimer's spreads
+    diseaseSpreadRate: 0.015,
 
-    diseaseDamageRate: 0.001,
+    // Health damage caused by disease
+    diseaseDamageRate: 0.08,
 
-    activityLossRate: 0.4,
+    // Neural activity loss
+    activityLossRate: 0.15,
 
+    // Chip recovery
     recoveryRate: 0.004,
 
+    // Chip stimulation
     stimulationStrength: 0.02,
 
     minimumHealth: 0,
 
     maximumHealth: 1,
 
+    // Region becomes an active disease source
     infectionThreshold: 0.15
 
 };

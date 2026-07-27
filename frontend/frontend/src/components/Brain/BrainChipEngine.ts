@@ -1,4 +1,3 @@
-
 import * as THREE from "three";
 
 import { brainEngine } from "./BrainEngine";
@@ -6,141 +5,474 @@ import { brainPositionStore } from "./BrainPositionStore";
 
 class BrainChipEngine {
 
-    private chipPosition = new THREE.Vector3(
-        0.3,
-        -0.3,
-        0
-    );
+    private chipPosition =
+        new THREE.Vector3(
+            0.3,
+            -0.3,
+            0
+        );
 
-    // Later BrainPulse will animate this value
-    private stimulationRadius = 0.45;
+    private stimulationRadius =
+        0.45;
 
-    // Regions currently affected by the chip
-    private activeRegions = new Set<number>();
+    // Regions physically inside chip field
+    private activeRegions =
+        new Set<number>();
 
-    // -----------------------------
+    // Locked treatment target
+    private targetRegion:
+        number | null = null;
+
+    // --------------------------------------------------
     // Getters
-    // -----------------------------
+    // --------------------------------------------------
 
     getChipPosition() {
 
         return this.chipPosition;
-
     }
 
     getStimulationRadius() {
 
         return this.stimulationRadius;
-
     }
 
-    getNearestRegion(): number {
+    setStimulationRadius(
+        radius: number
+    ) {
 
-        const positions = brainPositionStore.get();
+        this.stimulationRadius =
+            Math.max(
+                0,
+                radius
+            );
+    }
 
-        let nearest = 0;
+    isRegionActive(
+        id: number
+    ) {
 
-        let minDistance = Number.MAX_VALUE;
+        return this.activeRegions.has(
+            id
+        );
+    }
 
-        for (let i = 0; i < positions.length; i++) {
+    getActiveRegions():
+        number[] {
+
+        return [
+            ...this.activeRegions
+        ];
+    }
+
+    getTargetRegion():
+        number | null {
+
+        return this.targetRegion;
+    }
+
+    // --------------------------------------------------
+    // Find nearest anatomical region
+    // --------------------------------------------------
+
+    getNearestRegion():
+        number {
+
+        const positions =
+            brainPositionStore.get();
+
+        if (
+            positions.length === 0
+        ) {
+
+            return -1;
+        }
+
+        let nearest = -1;
+
+        let minDistance =
+            Number.MAX_VALUE;
+
+        const regionCount =
+            brainEngine
+                .getRegionCount();
+
+        const count =
+            Math.min(
+                positions.length,
+                regionCount
+            );
+
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
+
+            const position =
+                positions[i];
+
+            if (!position)
+                continue;
 
             const distance =
-                positions[i].distanceTo(this.chipPosition);
+                position.distanceTo(
+                    this.chipPosition
+                );
 
-            if (distance < minDistance) {
+            if (
+                distance <
+                minDistance
+            ) {
 
-                minDistance = distance;
+                minDistance =
+                    distance;
 
-                nearest = i;
-
+                nearest =
+                    i;
             }
-
         }
 
         return nearest;
-
     }
 
-    setStimulationRadius(radius: number) {
+    // --------------------------------------------------
+    // Calculate treatment priority
+    // --------------------------------------------------
 
-        this.stimulationRadius = radius;
+    private calculateTargetScore(
+        regionId: number,
+        distance: number
+    ) {
 
+        const region =
+            brainEngine.getRegion(
+                regionId
+            );
+
+        /*
+         * Disease is deliberately the
+         * strongest targeting factor.
+         */
+
+        const diseaseScore =
+            region.disease *
+            5;
+
+        const healthDamage =
+            (
+                1 -
+                region.health
+            ) *
+            2;
+
+        const activityDamage =
+            (
+                1 -
+                region.activity
+            ) *
+            1.5;
+
+        const infectionScore =
+            region.infected
+                ? 1
+                : 0;
+
+        /*
+         * Distance matters, but shouldn't
+         * overpower actual disease severity.
+         */
+
+        const distancePenalty =
+            distance *
+            0.5;
+
+        return (
+            diseaseScore +
+            healthDamage +
+            activityDamage +
+            infectionScore -
+            distancePenalty
+        );
     }
 
-    isRegionActive(id: number) {
+    // --------------------------------------------------
+    // Is region worth targeting?
+    // --------------------------------------------------
 
-        return this.activeRegions.has(id);
+    private needsTreatment(
+        regionId: number
+    ) {
 
+        const region =
+            brainEngine.getRegion(
+                regionId
+            );
+
+        return (
+            region.disease >= 0.12 ||
+            region.infected ||
+            region.health < 0.90 ||
+            region.activity < 0.85
+        );
     }
 
-    // -----------------------------
-    // Update
-    // -----------------------------
+    // --------------------------------------------------
+    // Select adaptive target
+    // --------------------------------------------------
+
+    selectTargetRegion():
+        number | null {
+
+        const positions =
+            brainPositionStore.get();
+
+        const regionCount =
+            brainEngine
+                .getRegionCount();
+
+        if (
+            positions.length === 0 ||
+            regionCount === 0
+        ) {
+
+            this.targetRegion =
+                null;
+
+            return null;
+        }
+
+        const count =
+            Math.min(
+                positions.length,
+                regionCount
+            );
+
+        let bestRegion:
+            number | null = null;
+
+        let highestScore =
+            Number.NEGATIVE_INFINITY;
+
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
+
+            const position =
+                positions[i];
+
+            if (!position)
+                continue;
+
+            /*
+             * Don't choose completely healthy
+             * regions as treatment origins.
+             */
+
+            if (
+                !this.needsTreatment(i)
+            ) {
+
+                continue;
+            }
+
+            const distance =
+                position.distanceTo(
+                    this.chipPosition
+                );
+
+            const score =
+                this.calculateTargetScore(
+                    i,
+                    distance
+                );
+
+            if (
+                score >
+                highestScore
+            ) {
+
+                highestScore =
+                    score;
+
+                bestRegion =
+                    i;
+            }
+        }
+
+        /*
+         * If no damaged region exists,
+         * there is nothing useful to target.
+         */
+
+        this.targetRegion =
+            bestRegion;
+
+        if (
+            bestRegion !== null
+        ) {
+
+            const region =
+                brainEngine.getRegion(
+                    bestRegion
+                );
+
+            console.log(
+                "Adaptive chip target selected:",
+                bestRegion,
+                region.name,
+                "Disease:",
+                region.disease.toFixed(2),
+                "Health:",
+                region.health.toFixed(2),
+                "Activity:",
+                region.activity.toFixed(2)
+            );
+        }
+
+        return bestRegion;
+    }
+
+    // --------------------------------------------------
+    // Explicitly lock target
+    // --------------------------------------------------
+
+    setTargetRegion(
+        regionId: number
+    ) {
+
+        const count =
+            brainEngine
+                .getRegionCount();
+
+        if (
+            regionId < 0 ||
+            regionId >= count
+        ) {
+
+            console.error(
+                "Invalid chip target:",
+                regionId
+            );
+
+            return;
+        }
+
+        this.targetRegion =
+            regionId;
+    }
+
+    // --------------------------------------------------
+    // Clear target
+    // --------------------------------------------------
+
+    clearTarget() {
+
+        this.targetRegion =
+            null;
+    }
+
+    // --------------------------------------------------
+    // Update chip state
+    // --------------------------------------------------
 
     update() {
 
-        if (!brainEngine.isChipActive()) {
+        if (
+            !brainEngine
+                .isChipActive()
+        ) {
 
-            this.activeRegions.clear();
+            this.activeRegions
+                .clear();
 
             return;
-
         }
 
-        const positions = brainPositionStore.get();
+        const positions =
+            brainPositionStore.get();
 
-        this.activeRegions.clear();
+        const regionCount =
+            brainEngine
+                .getRegionCount();
 
-        for (let i = 0; i < positions.length; i++) {
+        if (
+            positions.length === 0 ||
+            regionCount === 0
+        ) {
 
-            const distance =
-                positions[i].distanceTo(this.chipPosition);
+            return;
+        }
 
-            if (distance > this.stimulationRadius)
+        // ----------------------------------------------
+        // Detect physical chip field
+        // ----------------------------------------------
+
+        this.activeRegions
+            .clear();
+
+        const count =
+            Math.min(
+                positions.length,
+                regionCount
+            );
+
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
+
+            const position =
+                positions[i];
+
+            if (!position)
                 continue;
 
-            // Region is inside stimulation radius
-            this.activeRegions.add(i);
+            const distance =
+                position.distanceTo(
+                    this.chipPosition
+                );
 
-            // 1 at centre → 0 at edge
-            const strength =
-                1 - distance / this.stimulationRadius;
+            if (
+                distance <=
+                this.stimulationRadius
+            ) {
 
-            brainEngine.setActivity(
-
-                i,
-
-                Math.min(
-
-                    brainEngine.getActivity(i)
-                    + strength * 0.004,
-
-                    1
-
-                )
-
-            );
-
-            brainEngine.setHealth(
-
-                i,
-
-                Math.min(
-
-                    brainEngine.getHealth(i)
-                    + strength * 0.002,
-
-                    1
-
-                )
-
-            );
-
+                this.activeRegions.add(
+                    i
+                );
+            }
         }
 
+        /*
+         * IMPORTANT:
+         *
+         * Do NOT call selectTargetRegion()
+         * here.
+         *
+         * update() runs every animation frame.
+         * Re-selecting here would allow the
+         * treatment origin to change while a
+         * propagation session is running.
+         */
     }
 
+    // --------------------------------------------------
+    // Reset
+    // --------------------------------------------------
+
+    reset() {
+
+        this.activeRegions
+            .clear();
+
+        this.targetRegion =
+            null;
+    }
 }
 
 export const brainChipEngine =
-    new BrainChipEngine();
+    new BrainChipEngine()   
