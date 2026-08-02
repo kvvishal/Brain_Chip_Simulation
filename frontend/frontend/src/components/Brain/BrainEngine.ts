@@ -37,7 +37,7 @@ class BrainEngine {
 
                 name: regions[i].name,
 
-                activity: 0.8,
+                activity: 0.9 + Math.random() * 0.05,
 
                 health: 1,
 
@@ -164,7 +164,7 @@ class BrainEngine {
 
         this.regions.forEach(region => {
 
-            region.activity = 1;
+            region.activity = 0.9 + Math.random() * 0.08;
 
             region.health = 1;
 
@@ -297,14 +297,6 @@ class BrainEngine {
                 region.activity +=
 
                     (Math.random() - 0.5) * 0.01;
-
-            }
-
-            if (region.stimulated) {
-
-                region.activity += 0.0015;
-
-                region.health += 0.001;
 
             }
 

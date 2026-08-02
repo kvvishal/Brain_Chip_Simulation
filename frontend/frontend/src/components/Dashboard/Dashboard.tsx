@@ -5,10 +5,20 @@ import LeftPanel from "../Layout/LeftPanel";
 import StatusPanel from "./StatusPanel";
 import BrainStatistics from "./BrainStatistics";
 import EventLog from "./EventLog";
+import BrainActivityChart from "../Brain/BrainActivityChart";
 
 export default function Dashboard() {
     return (
-        <main className="min-h-screen bg-[#050816] p-3 sm:p-4 lg:p-6">
+        <main
+            className="
+                min-h-screen
+                w-full
+                bg-[#050816]
+                p-3
+                sm:p-4
+                lg:p-5
+            "
+        >
 
             {/* Header */}
             <div className="mb-5">
@@ -97,7 +107,7 @@ export default function Dashboard() {
                 className="
                     grid
                     grid-cols-1
-                    lg:grid-cols-2
+                    lg:grid-cols-12
                     gap-4
                     lg:gap-6
                     mt-4
@@ -105,9 +115,53 @@ export default function Dashboard() {
                 "
             >
 
-                <BrainStatistics />
+                {/* Brain Activity Chart */}
 
-                <EventLog />
+                <div
+                    className="
+                        lg:col-span-8
+                        bg-[#111827]
+                        border
+                        border-slate-700
+                        rounded-xl
+                        overflow-hidden
+                    "
+                >
+
+                    <div className="px-4 py-3 border-b border-slate-700">
+
+                        <h2 className="font-semibold text-cyan-400">
+
+                            Brain Activity Over Time
+
+                        </h2>
+
+                    </div>
+
+                    <div className="h-[320px] p-4">
+
+                        <BrainActivityChart />
+
+                    </div>
+
+                </div>
+
+                {/* Right Column */}
+
+                <div
+                    className="
+                        lg:col-span-4
+                        flex
+                        flex-col
+                        gap-4
+                    "
+                >
+
+                    <BrainStatistics />
+
+                    <EventLog />
+
+                </div>
 
             </div>
 

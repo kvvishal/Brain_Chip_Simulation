@@ -360,7 +360,13 @@ export default function BrainSignal({
     const opacity =
         type === "chip"
             ? 1
-            : 0.9;
+            : Math.max(
+                0.2,
+                1 - Math.max(
+                    brainEngine.getRegion(source).disease,
+                    brainEngine.getRegion(target).disease
+                ) * 0.8
+            );
 
     return (
 

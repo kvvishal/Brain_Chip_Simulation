@@ -1,34 +1,56 @@
 "use client";
 
 import { brainEngine } from "../Brain/BrainEngine";
+import { useBrain } from "../Brain/BrainContext";
 import { brainSignalPropagation } from "../Brain/BrainSignalPropagation";
 import { recoveryEngine } from "../Brain/RecoveryEngine";
 
 export default function BrainStatistics() {
-    const regions = brainEngine.getRegions();
-    const totalRegions = regions.length;
+
+    /*
+     * Reading version subscribes this component
+     * to BrainContext refreshes.
+     */
+    const { version } = useBrain();
+
+    const regions =
+        brainEngine.getRegions();
+
+    const totalRegions =
+        regions.length;
 
     // =============================================
-    // Region statistics
+    // REGION STATISTICS
     // =============================================
 
-    const infectedRegions =
+    const damagedRegions =
         regions.filter(
             region =>
                 region.infected ||
-                region.disease > 0
+                region.disease > 0.01
         ).length;
 
+    /*
+     * A region counts as healthy only when
+     * disease, health and neural activity
+     * have all returned to healthy levels.
+     */
     const healthyRegions =
-        totalRegions - infectedRegions;
+        regions.filter(
+            region =>
+                !region.infected &&
+                region.disease <= 0.01 &&
+                region.health >= 0.90
+        ).length;
 
     const stimulatedRegions =
         regions.filter(
-            region => region.stimulated
+            region =>
+                region.stimulated
         ).length;
 
     // =============================================
-    // Average health
+    // AVERAGE BRAIN HEALTH
     // =============================================
 
     const averageHealth =
@@ -39,11 +61,12 @@ export default function BrainStatistics() {
                     (sum, region) =>
                         sum + region.health,
                     0
-                ) / totalRegions
+                ) /
+                totalRegions
             ) * 100;
 
     // =============================================
-    // Average activity
+    // AVERAGE NEURAL ACTIVITY
     // =============================================
 
     const averageActivity =
@@ -54,19 +77,23 @@ export default function BrainStatistics() {
                     (sum, region) =>
                         sum + region.activity,
                     0
-                ) / totalRegions
+                ) /
+                totalRegions
             ) * 100;
 
     // =============================================
-    // Treatment
+    // CHIP / TREATMENT
     // =============================================
+
+    const chipActive =
+        brainEngine.isChipActive();
 
     const activeTreatment =
         brainSignalPropagation
             .getActiveRegionCount();
 
     const treatmentCoverage =
-        brainEngine.isChipActive()
+        chipActive
             ? brainSignalPropagation
                 .getTreatmentCoverage()
             : 0;
@@ -75,14 +102,30 @@ export default function BrainStatistics() {
         recoveryEngine
             .getRecoveryPercentage();
 
+    // Prevent unused-variable warning while
+    // still subscribing to context updates.
+    void version;
+
+    // =============================================
+    // UI
+    // =============================================
+
     return (
+
         <div className="bg-[#111827] rounded-xl h-full p-6">
 
             <h2 className="text-xl text-cyan-400 font-bold mb-6">
                 Brain Statistics
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div
+                className="
+                    grid
+                    grid-cols-1
+                    sm:grid-cols-2
+                    gap-4
+                "
+            >
 
                 <StatCard
                     title="Total Regions"
@@ -96,7 +139,7 @@ export default function BrainStatistics() {
 
                 <StatCard
                     title="Damaged Regions"
-                    value={infectedRegions}
+                    value={damagedRegions}
                 />
 
                 <StatCard
@@ -132,7 +175,7 @@ export default function BrainStatistics() {
                 <StatCard
                     title="Chip"
                     value={
-                        brainEngine.isChipActive()
+                        chipActive
                             ? "ACTIVE"
                             : "OFF"
                     }
@@ -144,14 +187,24 @@ export default function BrainStatistics() {
     );
 }
 
+// ==================================================
+// STAT CARD
+// ==================================================
+
 function StatCard({
+
     title,
     value
+
 }: {
+
     title: string;
     value: string | number;
+
 }) {
+
     return (
+
         <div
             className="
                 bg-slate-800/60
@@ -161,6 +214,7 @@ function StatCard({
                 p-4
             "
         >
+
             <p className="text-xs text-slate-400 mb-2">
                 {title}
             </p>
@@ -168,6 +222,7 @@ function StatCard({
             <p className="text-xl font-bold text-white">
                 {value}
             </p>
+
         </div>
     );
 }

@@ -6,6 +6,8 @@ import BrainConnection from "./BrainConnection";
 import BrainSignal from "./BrainSignals";
 import { brainSignalPropagation } from "./BrainSignalPropagation";
 
+import * as THREE from "three";
+
 
 import { loadConnections } from "@/api/brainConnectionAPI";
 import { loadRegions } from "@/api/brainAPI";
@@ -166,6 +168,19 @@ export default function BrainConnections() {
 
     }
 
+    const averageDisease =
+        brainEngine
+            .getRegions()
+            .reduce(
+                (sum, region) => sum + region.disease,
+                0
+            ) / regionCount;
+
+    const MAX_CONNECTIONS =
+        Math.round(
+            100 +
+            averageDisease * 80
+        );
     // ==================================================
     // Render
     // ==================================================
@@ -178,23 +193,14 @@ export default function BrainConnections() {
 
                 connections
 
-                    // Ignore weak anatomical pathways
-                    .filter(
-                        (connection) =>
-                            connection.weight >= 2
-                    )
+                    .filter(connection => connection.weight >= 1.5)
 
-                    // Strongest first
-                    .sort(
-                        (a, b) =>
-                            b.weight - a.weight
-                    )
+                    .sort((a, b) => b.weight - a.weight)
 
-                    // Performance limit
-                    .slice(0, 300)
+                    .slice(0, MAX_CONNECTIONS)
 
                     .map((connection) => {
-
+                        
                         const source =
                             connection.source;
 
@@ -284,11 +290,16 @@ export default function BrainConnections() {
                          */
 
                         const connectionStrength =
-                            Math.max(
 
-                                0.08,
+                            THREE.MathUtils.clamp(
 
-                                1 - disease
+                                (1 - disease) *
+
+                                (0.3 + activity * 0.7),
+
+                                0.05,
+
+                                1
 
                             );
 
@@ -334,6 +345,11 @@ export default function BrainConnections() {
                             biologicalSpeed = 0.12;
                         }
 
+                        const showBiologicalSignal =
+                            !brainEngine.isChipActive() &&
+                            activity > 0.45 &&
+                            connectionStrength > 0.30;
+
                         return (
 
                             <React.Fragment
@@ -358,11 +374,8 @@ export default function BrainConnections() {
 
                                     weight={
                                         Math.min(
-
-                                            connection.weight / 5,
-
-                                            0.25
-
+                                            connection.weight / 8,
+                                            1
                                         )
                                     }
 
@@ -381,35 +394,29 @@ export default function BrainConnections() {
                                     BIOLOGICAL SIGNAL
                                    ========================= */}
 
-                                <BrainSignal
+                                {
+                                    showBiologicalSignal && (
 
-                                    source={
-                                        source
-                                    }
+                                        <BrainSignal
 
-                                    target={
-                                        target
-                                    }
+                                            source={source}
 
-                                    start={
-                                        start
-                                    }
+                                            target={target}
 
-                                    end={
-                                        end
-                                    }
+                                            start={start}
 
-                                    speed={
-                                        biologicalSpeed
-                                    }
+                                            end={end}
 
-                                    color={
-                                        signalColor
-                                    }
+                                            speed={biologicalSpeed}
 
-                                    type="biological"
+                                            color={signalColor}
 
-                                />
+                                            type="biological"
+
+                                        />
+
+                                    )
+                                }
 
                                 
 

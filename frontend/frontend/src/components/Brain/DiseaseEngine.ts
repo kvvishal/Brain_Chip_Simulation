@@ -18,49 +18,76 @@ class DiseaseEngine {
 
     update() {
 
-    if (!this.running) return;
+        if (!this.running) return;
 
-    for (let i = 0; i < 96; i++) {
+        const count = brainEngine.getRegionCount();
 
-        const name = brainEngine.getRegionName(i);
+        for (let i = 0; i < count; i++) {
 
-        if (
+            const region = brainEngine.getRegion(i);
 
-            name.includes("Hipp") ||
+            /*
+            * Ignore healthy regions.
+            */
 
-            name.includes("PHC") ||
+            if (
+                !region.infected &&
+                region.disease <= 0
+            ) {
+                continue;
+            }
 
-            name.includes("Amyg") ||
+            const health =
+                brainEngine.getHealth(i);
 
-            name.includes("TC")
+            const activity =
+                brainEngine.getActivity(i);
 
-        ) {
+            /*
+            * Damage scales with disease severity.
+            *
+            * disease = 0.2  -> slow decline
+            * disease = 0.5  -> medium decline
+            * disease = 1.0  -> rapid decline
+            */
 
-            const activity = brainEngine.getActivity(i);
+            const damage =
+                Math.max(region.disease, 0.1);
 
-            const health = brainEngine.getHealth(i);
+            // ==========================
+            // HEALTH LOSS
+            // ==========================
 
-            brainEngine.setActivity(
-
-                i,
-
-                Math.max(0.05, activity - 0.0005)
-
-            );
+            const newHealth =
+                Math.max(
+                    0.05,
+                    health -
+                    damage * 0.002
+                );
 
             brainEngine.setHealth(
-
                 i,
-
-                Math.max(0.2, health - 0.0002)
-
+                newHealth
             );
 
+            // ==========================
+            // ACTIVITY LOSS
+            // ==========================
+
+            const newActivity =
+                Math.max(
+                    0.05,
+                    activity -
+                    damage * 0.003
+                );
+
+            brainEngine.setActivity(
+                i,
+                newActivity
+            );
         }
 
     }
-
-}
 
 }
 

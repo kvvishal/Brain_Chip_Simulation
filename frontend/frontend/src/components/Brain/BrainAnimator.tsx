@@ -9,6 +9,7 @@ import { statisticsEngine } from "./StatisticsEngine";
 import { diseasePropagation } from "./DiseasePropagation";
 import { brainChipEngine } from "./BrainChipEngine";
 import { useBrain } from "./BrainContext";
+import { activityHistory } from "./ActivityHistory";
 import { recoveryEngine } from "./RecoveryEngine";
 import { brainSignalPropagation } from "./BrainSignalPropagation";
 
@@ -19,13 +20,13 @@ export default function BrainAnimator() {
     useFrame(() => {
 
         // -----------------------------------------
-        // 1. Update base brain state
+        // 1. Update healthy brain activity
         // -----------------------------------------
 
         brainEngine.update();
 
         // -----------------------------------------
-        // 2. Alzheimer's progression
+        // 2. Alzheimer's disease propagation
         // -----------------------------------------
 
         if (
@@ -37,34 +38,50 @@ export default function BrainAnimator() {
         }
 
         // -----------------------------------------
-        // 3. Brain chip
+        // 3. Apply disease effects
+        // -----------------------------------------
+
+        diseaseEngine.update();
+
+        // -----------------------------------------
+        // 4. Brain chip treatment
         // -----------------------------------------
 
         if (brainEngine.isChipActive()) {
 
-            // AI/chip controller
+            // AI controller selects target regions
             brainChipEngine.update();
 
-            // Spread stimulation through network
+            // Spread stimulation through neural network
             brainSignalPropagation.update();
 
-            // Repair regions reached by stimulation
+            // Repair stimulated regions
             recoveryEngine.update();
 
         }
 
         // -----------------------------------------
-        // 4. Other simulation engines
+        // 5. Update statistics after all changes
         // -----------------------------------------
 
         statisticsEngine.update();
 
+        // -----------------------------------------
+        // 6. Update simulation controller
+        // -----------------------------------------
+
         simulationPlayer.update();
 
-        diseaseEngine.update();
+        activityHistory.add(
+
+            brainEngine
+                .getRegions()
+                .map(region => region.activity)
+
+        );
 
         // -----------------------------------------
-        // 5. Update React visualization
+        // 7. Refresh React visualization
         // -----------------------------------------
 
         refresh();
@@ -72,4 +89,5 @@ export default function BrainAnimator() {
     });
 
     return null;
+
 }

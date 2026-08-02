@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+    useEffect,
+    useRef,
+    useState
+} from "react";
 
 import { brainEngine } from "../Brain/BrainEngine";
 import { brainSignalPropagation } from "../Brain/BrainSignalPropagation";
@@ -24,12 +28,12 @@ export default function EventLog() {
     const [logs, setLogs] =
         useState<LogEntry[]>([]);
 
-    /*
-     * Previous simulation values.
-     *
-     * We compare these against the current
-     * engine state to detect changes.
-     */
+    // ==========================================
+    // PREVIOUS SIMULATION STATE
+    // ==========================================
+
+    const initialized =
+        useRef(false);
 
     const previousMode =
         useRef<string | null>(null);
@@ -74,10 +78,8 @@ export default function EventLog() {
         setLogs(previous => {
 
             /*
-             * Keep dashboard lightweight.
-             *
-             * We only display the latest
-             * 30 simulation events.
+             * Keep only the latest 30 events
+             * so the dashboard remains lightweight.
              */
 
             return [
@@ -106,6 +108,10 @@ export default function EventLog() {
                     return;
                 }
 
+                // ======================================
+                // CURRENT ENGINE STATE
+                // ======================================
+
                 const mode =
                     brainEngine.getMode();
 
@@ -117,21 +123,88 @@ export default function EventLog() {
                         .getActiveRegionCount();
 
                 const infected =
-                    regions.filter(region =>
-                        region.infected ||
-                        region.disease > 0.01
+                    regions.filter(
+                        region =>
+                            region.infected ||
+                            region.disease > 0.01
                     ).length;
 
                 const healthy =
-                    regions.filter(region =>
-
-                        region.disease <= 0.01 &&
-
-                        region.health >= 0.90 &&
-
-                        region.activity >= 0.90
-
+                    regions.filter(
+                        region =>
+                            region.disease <= 0.01 &&
+                            region.health >= 0.90 &&
+                            region.activity >= 0.90
                     ).length;
+
+                // ======================================
+                // INITIAL STATE
+                // ======================================
+
+                /*
+                 * Establish a baseline before trying
+                 * to detect simulation changes.
+                 *
+                 * Without this, an already infected
+                 * brain could be interpreted as
+                 * newly infected when EventLog mounts.
+                 */
+
+                if (!initialized.current) {
+
+                    previousMode.current =
+                        mode;
+
+                    previousChipState.current =
+                        chipActive;
+
+                    previousActiveRegions.current =
+                        activeTreatment;
+
+                    previousInfectedRegions.current =
+                        infected;
+
+                    previousHealthyRegions.current =
+                        healthy;
+
+                    initialized.current =
+                        true;
+
+                    if (
+                        mode === "healthy"
+                    ) {
+
+                        addLog(
+                            "Healthy brain simulation loaded",
+                            "healthy"
+                        );
+
+                    }
+
+                    else if (
+                        mode === "alzheimer"
+                    ) {
+
+                        addLog(
+                            "Alzheimer's disease simulation active",
+                            "disease"
+                        );
+
+                    }
+
+                    else if (
+                        mode === "chip"
+                    ) {
+
+                        addLog(
+                            "Brain chip treatment active",
+                            "chip"
+                        );
+
+                    }
+
+                    return;
+                }
 
                 // ======================================
                 // MODE CHANGE
@@ -197,9 +270,7 @@ export default function EventLog() {
 
                     }
 
-                    else if (
-                        previousChipState.current
-                    ) {
+                    else {
 
                         addLog(
                             "Neural chip deactivated",
@@ -297,6 +368,8 @@ export default function EventLog() {
                 // ======================================
 
                 if (
+                    chipActive &&
+                    mode === "chip" &&
                     healthy >
                     previousHealthyRegions.current
                 ) {
@@ -305,25 +378,14 @@ export default function EventLog() {
                         healthy -
                         previousHealthyRegions.current;
 
-                    /*
-                     * Avoid reporting initial healthy
-                     * brain creation as "recovery".
-                     */
-
-                    if (
-                        mode === "chip"
-                    ) {
-
-                        addLog(
-                            `${difference} region${
-                                difference === 1
-                                    ? ""
-                                    : "s"
-                            } functionally recovered`,
-                            "recovery"
-                        );
-
-                    }
+                    addLog(
+                        `${difference} region${
+                            difference === 1
+                                ? ""
+                                : "s"
+                        } functionally recovered`,
+                        "recovery"
+                    );
 
                 }
 
@@ -331,6 +393,10 @@ export default function EventLog() {
                     healthy;
 
             }, 500);
+
+        // ==========================================
+        // CLEANUP
+        // ==========================================
 
         return () => {
 
@@ -427,7 +493,6 @@ export default function EventLog() {
 
     );
 }
-
 
 // ==================================================
 // EVENT COLOR

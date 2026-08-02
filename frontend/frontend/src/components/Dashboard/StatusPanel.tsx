@@ -95,6 +95,8 @@ export default function StatusPanel() {
             ? brainEngine.getRegionName(targetId)
             : "None";
 
+    const { version } = useBrain();
+
     // ==================================================
     // Treatment network
     // ==================================================

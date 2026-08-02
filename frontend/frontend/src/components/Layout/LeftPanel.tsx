@@ -8,6 +8,7 @@ import { simulationManager } from "@/simulation/SimulationManager";
 import { diseasePropagation } from "../Brain/DiseasePropagation";
 import { brainSignalPropagation } from "../Brain/BrainSignalPropagation";
 import { brainChipEngine } from "../Brain/BrainChipEngine";
+import { recoveryEngine } from "../Brain/RecoveryEngine";
 
 const RIGHT_HIPPOCAMPUS = 15;
 const LEFT_HIPPOCAMPUS = 63;
@@ -31,6 +32,8 @@ export default function LeftPanel() {
         brainSignalPropagation.reset();
 
         brainChipEngine.reset();
+
+        recoveryEngine.reset();
 
         brainEngine.deactivateChip();
 
