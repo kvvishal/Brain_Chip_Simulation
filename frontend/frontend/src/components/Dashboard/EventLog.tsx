@@ -430,9 +430,9 @@ export default function EventLog() {
 
             <div
                 className="
+                    flex-1
                     space-y-3
                     text-sm
-                    max-h-72
                     overflow-y-auto
                     pr-2
                 "

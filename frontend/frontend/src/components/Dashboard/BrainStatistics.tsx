@@ -192,16 +192,23 @@ export default function BrainStatistics() {
 // ==================================================
 
 function StatCard({
-
     title,
     value
-
 }: {
-
     title: string;
     value: string | number;
-
 }) {
+
+    const numericValue =
+        typeof value === "string"
+            ? parseFloat(value)
+            : value;
+
+    const showBar =
+        typeof numericValue === "number" &&
+        !Number.isNaN(numericValue) &&
+        numericValue >= 0 &&
+        numericValue <= 100;
 
     return (
 
@@ -210,19 +217,70 @@ function StatCard({
                 bg-slate-800/60
                 border
                 border-slate-700
-                rounded-lg
+                rounded-xl
                 p-4
+                transition-all
+                duration-300
+                hover:border-cyan-500
+                hover:shadow-lg
+                hover:shadow-cyan-900/20
             "
         >
 
             <p className="text-xs text-slate-400 mb-2">
+
                 {title}
+
             </p>
 
-            <p className="text-xl font-bold text-white">
+            <p className="text-2xl font-bold text-white mb-3">
+
                 {value}
+
             </p>
+
+            {
+
+                showBar && (
+
+                    <div
+                        className="
+                            w-full
+                            h-2
+                            bg-slate-700
+                            rounded-full
+                            overflow-hidden
+                        "
+                    >
+
+                        <div
+
+                            className="
+                                h-full
+                                rounded-full
+                                bg-gradient-to-r
+                                from-cyan-500
+                                to-emerald-400
+                                transition-all
+                                duration-500
+                            "
+
+                            style={{
+
+                                width: `${numericValue}%`
+
+                            }}
+
+                        />
+
+                    </div>
+
+                )
+
+            }
 
         </div>
+
     );
+
 }

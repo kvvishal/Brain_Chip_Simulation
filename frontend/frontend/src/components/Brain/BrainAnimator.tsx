@@ -9,7 +9,10 @@ import { statisticsEngine } from "./StatisticsEngine";
 import { diseasePropagation } from "./DiseasePropagation";
 import { brainChipEngine } from "./BrainChipEngine";
 import { useBrain } from "./BrainContext";
+import { recoveryHistory } from "./RecoveryHistory";
 import { activityHistory } from "./ActivityHistory";
+import { diseaseHistory } from "./DiseaseHistory";
+import { healthHistory } from "./HealthHistory";
 import { recoveryEngine } from "./RecoveryEngine";
 import { brainSignalPropagation } from "./BrainSignalPropagation";
 
@@ -78,6 +81,56 @@ export default function BrainAnimator() {
                 .getRegions()
                 .map(region => region.activity)
 
+        );
+
+        // -----------------------------------------
+        // Record average brain health
+        // -----------------------------------------
+
+        const regions = brainEngine.getRegions();
+
+        if (regions.length > 0) {
+
+            const averageHealth =
+
+                regions.reduce(
+
+                    (sum, region) => sum + region.health,
+
+                    0
+
+                ) / regions.length;
+
+            healthHistory.add(
+                averageHealth
+            );
+
+        }
+
+        // -----------------------------------------
+        // Record average disease
+        // -----------------------------------------
+
+        const averageDisease =
+
+            regions.reduce(
+
+                (sum, region) => sum + region.disease,
+
+                0
+
+            ) / regions.length;
+
+        diseaseHistory.add(
+            averageDisease
+        );
+
+        // -----------------------------------------
+        // Record recovery progress
+        // -----------------------------------------
+
+        recoveryHistory.add(
+            recoveryEngine.getRecoveryPercentage() / 100
         );
 
         // -----------------------------------------

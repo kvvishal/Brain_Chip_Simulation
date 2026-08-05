@@ -5,6 +5,9 @@ import LeftPanel from "../Layout/LeftPanel";
 import StatusPanel from "./StatusPanel";
 import BrainStatistics from "./BrainStatistics";
 import EventLog from "./EventLog";
+import BrainDiseaseChart from "../Brain/BrainDiseaseChart";
+import BrainRecoveryChart from "../Brain/BrainRecoveryChart";
+import BrainHealthChart from "../Brain/BrainHealthChart";
 import BrainActivityChart from "../Brain/BrainActivityChart";
 
 export default function Dashboard() {
@@ -20,8 +23,10 @@ export default function Dashboard() {
             "
         >
 
-            {/* Header */}
+            {/* ================= HEADER ================= */}
+
             <div className="mb-5">
+
                 <h1 className="text-xl sm:text-2xl font-bold text-cyan-400">
                     Brain Chip Simulation
                 </h1>
@@ -29,6 +34,7 @@ export default function Dashboard() {
                 <p className="text-xs sm:text-sm text-blue-300 mt-1">
                     Neural activity, Alzheimer's progression and adaptive chip treatment
                 </p>
+
             </div>
 
             {/* ================= TOP ================= */}
@@ -45,6 +51,7 @@ export default function Dashboard() {
             >
 
                 {/* Controls */}
+
                 <div
                     className="
                         md:col-span-12
@@ -52,16 +59,18 @@ export default function Dashboard() {
                         xl:col-span-2
                     "
                 >
+
                     <LeftPanel />
+
                 </div>
 
                 {/* Brain */}
+
                 <div
                     className="
                         md:col-span-8
                         lg:col-span-6
                         xl:col-span-7
-
                         bg-[#111827]
                         border
                         border-slate-700
@@ -69,10 +78,13 @@ export default function Dashboard() {
                         overflow-hidden
                     "
                 >
+
                     <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-700">
+
                         <h2 className="font-semibold text-cyan-400">
                             Neural Network Visualization
                         </h2>
+
                     </div>
 
                     <div
@@ -84,11 +96,15 @@ export default function Dashboard() {
                             2xl:h-[540px]
                         "
                     >
+
                         <BrainCanvas />
+
                     </div>
+
                 </div>
 
                 {/* Status */}
+
                 <div
                     className="
                         md:col-span-4
@@ -96,74 +112,52 @@ export default function Dashboard() {
                         xl:col-span-3
                     "
                 >
+
                     <StatusPanel />
-                </div>
-
-            </div>
-
-            {/* ================= BOTTOM ================= */}
-
-            <div
-                className="
-                    grid
-                    grid-cols-1
-                    lg:grid-cols-12
-                    gap-4
-                    lg:gap-6
-                    mt-4
-                    lg:mt-6
-                "
-            >
-
-                {/* Brain Activity Chart */}
-
-                <div
-                    className="
-                        lg:col-span-8
-                        bg-[#111827]
-                        border
-                        border-slate-700
-                        rounded-xl
-                        overflow-hidden
-                    "
-                >
-
-                    <div className="px-4 py-3 border-b border-slate-700">
-
-                        <h2 className="font-semibold text-cyan-400">
-
-                            Brain Activity Over Time
-
-                        </h2>
-
-                    </div>
-
-                    <div className="h-[320px] p-4">
-
-                        <BrainActivityChart />
-
-                    </div>
-
-                </div>
-
-                {/* Right Column */}
-
-                <div
-                    className="
-                        lg:col-span-4
-                        flex
-                        flex-col
-                        gap-4
-                    "
-                >
-
-                    <BrainStatistics />
-
-                    <EventLog />
 
                 </div>
 
             </div>
+
+           {/* ================= BOTTOM ================= */}
+
+        <div
+            className="
+                grid
+                grid-cols-1
+                xl:grid-cols-2
+                gap-4
+                lg:gap-6
+                mt-4
+                lg:mt-6
+            "
+        >
+
+            <div className="h-[320px]">
+                <BrainActivityChart />
+            </div>
+
+            <div className="h-[320px]">
+                <BrainHealthChart />
+            </div>
+
+            <div className="h-[320px]">
+                <BrainDiseaseChart />
+            </div>
+
+            <div className="h-[320px]">
+                <BrainRecoveryChart />
+            </div>
+
+            <div className="h-[710px]">
+                <BrainStatistics />
+            </div>
+
+            <div className="h-[710px]">
+                <EventLog />
+            </div>
+
+        </div>
 
         </main>
     );

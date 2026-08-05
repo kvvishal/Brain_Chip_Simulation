@@ -2,12 +2,31 @@ import { brainEngine } from "./BrainEngine";
 
 class BrainRegionSelector {
 
-    findRegion(keyword: string): number {
+    getRegionGroup(keyword: string): number[] {
+
+        return brainEngine
+            .getRegions()
+            .flatMap((region, index) =>
+                region.name.includes(keyword)
+                    ? [index]
+                    : []
+            );
+
+    }
+
+    private findHealthyRegion(): number {
 
         const regions = brainEngine.getRegions();
 
-        return regions.findIndex(r =>
-            r.name.includes(keyword)
+        return regions.findIndex(region =>
+
+            !region.name.includes("HC") &&
+            !region.name.includes("PHC") &&
+            !region.name.includes("TC") &&
+            !region.name.includes("PC") &&
+            !region.name.includes("PFC") &&
+            !region.name.includes("Amyg")
+
         );
 
     }
@@ -17,39 +36,21 @@ class BrainRegionSelector {
         return {
 
             hippocampus:
-                this.findRegion("HC"),
+                this.getRegionGroup("HC"),
 
             temporal:
-                this.findRegion("TC"),
+                this.getRegionGroup("TC"),
 
             parietal:
-                this.findRegion("PC"),
+                this.getRegionGroup("PC"),
 
             frontal:
-                this.findRegion("PFC"),
+                this.getRegionGroup("PFC"),
 
             control:
-                this.findHealthyRegion()
+                [this.findHealthyRegion()]
 
         };
-
-    }
-
-    private findHealthyRegion() {
-
-        const regions = brainEngine.getRegions();
-
-        return regions.findIndex(r =>
-
-            !r.name.includes("HC") &&
-
-            !r.name.includes("TC") &&
-
-            !r.name.includes("PC") &&
-
-            !r.name.includes("PFC")
-
-        );
 
     }
 
